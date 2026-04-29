@@ -1,30 +1,90 @@
-# React + TypeScript + Vite
+# Better VPing
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Premium athletics staff directory intelligence dashboard.
 
-Currently, two official plugins are available:
+## Apps
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `apps/web`: standalone React + TypeScript + Vite frontend for Vercel.
+- `apps/api`: standalone Hono + TypeScript backend for Render.
 
-## Expanding the ESLint configuration
+Install and run each app independently.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Local setup
 
-- Configure the top-level `parserOptions` property like this:
+```bash
+cd apps/api
+npm install
+cp .env.example .env
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+cd ../web
+npm install
+cp .env.example .env
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Environment
+
+Frontend (`apps/web/.env`):
+
+```bash
+VITE_API_BASE_URL=http://localhost:8787
+```
+
+Backend (`apps/api/.env` or Render env vars):
+
+```bash
+PORT=8787
+```
+
+CORS is handled by Hono and currently allows `http://localhost:5173`.
+
+## Development
+
+Run API:
+
+```bash
+cd apps/api
+npm run dev
+```
+
+Run web in another terminal:
+
+```bash
+cd apps/web
+npm run dev
+```
+
+Health check:
+
+```bash
+curl http://localhost:8787/api/health
+```
+
+## Build
+
+```bash
+cd apps/api
+npm run build
+
+cd ../web
+npm run build
+```
+
+## Deploy
+
+### Vercel frontend
+
+- Root directory: `apps/web`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Env: `VITE_API_BASE_URL=https://your-render-service.onrender.com`
+
+### Render backend
+
+- Root directory / build context: `apps/api`
+- Dockerfile path: `Dockerfile`
+
+Set env vars:
+
+```bash
+PORT=10000
+```

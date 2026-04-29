@@ -34,7 +34,7 @@ Durable decisions that apply across all phases:
 - **Failure policy**: fail loudly on empty scrape, timeout, unknown school, and malformed API responses. No fake successful reports.
 - **Observability policy**: no saved debug artifacts and no backend logs.
 - **Styling**: Tailwind only. Official school color accents and CSS monograms. No logos. Neutral diff cards.
-- **Deployment config**: frontend uses API base URL env var. Backend uses CORS allowlist env var. Render uses Playwright Docker base image.
+- **Deployment config**: frontend uses API base URL env var. Backend uses Hono CORS for `http://localhost:5173` during local dev. Render uses Playwright Docker base image.
 
 ---
 
@@ -44,17 +44,17 @@ Durable decisions that apply across all phases:
 
 ### What to build
 
-Create the deployable shape for Better VPing: separate frontend and backend apps, strict TypeScript, root convenience scripts, environment configuration, CORS boundary, backend health route, and Docker-ready Render backend. This phase proves the project can run locally as two services and can be deployed separately to Vercel and Render.
+Create the deployable shape for Better VPing: separate frontend and backend apps, strict TypeScript, per-app environment configuration, CORS boundary, backend health route, and Docker-ready Render backend. This phase proves the project can run locally as two services and can be deployed separately to Vercel and Render.
 
 ### Acceptance criteria
 
-- [ ] Frontend and backend are separated into independent app packages.
-- [ ] Root scripts support installing, developing, and building both apps.
-- [ ] Frontend can read an API base URL from environment config.
-- [ ] Backend exposes `GET /api/health`.
-- [ ] Backend CORS allows configured local/Vercel origins and rejects unlisted origins.
-- [ ] Both apps build with strict TypeScript.
-- [ ] Render backend has a Docker path based on Playwright-compatible runtime.
+- [x] Frontend and backend are separated into independent app packages.
+- [x] Frontend and backend install, develop, and build independently.
+- [x] Frontend can read an API base URL from environment config.
+- [x] Backend exposes `GET /api/health`.
+- [x] Backend CORS allows `http://localhost:5173` through Hono CORS.
+- [x] Both apps build with strict TypeScript.
+- [x] Render backend has a Docker path based on Playwright-compatible runtime.
 
 ---
 

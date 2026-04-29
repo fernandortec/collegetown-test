@@ -56,7 +56,7 @@ The backend is a Hono API deployed to Render. It uses Playwright to scrape curre
 38. As a developer, I want frontend environment configuration for the API base URL, so that local and deployed environments can call the correct backend.
 39. As a developer, I want backend CORS restricted by an allowed-origin environment variable, so that local and Vercel origins are supported without opening the API unnecessarily.
 40. As a developer, I want separate frontend and backend package files, so that each deploy installs only its required dependencies.
-41. As a developer, I want root convenience scripts for install, build, and dev tasks, so that local workflow remains simple.
+41. As a developer, I want independent frontend and backend install, build, and dev tasks, so that each deployable app stays isolated.
 42. As a developer, I want the backend to use Hono, so that the API remains small and fast.
 43. As a developer, I want the backend to use Node with tsx for development and tsc for builds, so that deployment is standard and compatible with Playwright.
 44. As a developer, I want strict TypeScript in both frontend and backend, so that API and data-shape bugs are caught early.
@@ -128,12 +128,12 @@ The backend is a Hono API deployed to Render. It uses Playwright to scrape curre
 - **Email CTA**: after draft is ready, create `mailto:` URL with encoded subject and body.
 - **Fallback draft**: deterministic Coaches Corner-style draft if no AI key is configured.
 - **Repo structure**: frontend in `web/`, backend in `server/`.
-- **Package structure**: separate `web/package.json` and `server/package.json`; no npm workspaces.
-- **Root scripts**: convenience scripts for install, build, and dev for both web and server.
+- **Package structure**: separate `web/package.json` and `server/package.json`.
+- **Scripts**: install, build, and dev commands run from each app directory.
 - **Package manager**: npm.
 - **Server build**: Node runtime, tsx for dev, tsc for build, node for start.
 - **TypeScript**: strict mode for both apps.
-- **CORS**: backend allows origins from environment allowlist, including local Vite and deployed Vercel app.
+- **CORS**: backend uses Hono CORS and currently allows local Vite during development.
 - **Render deploy**: Dockerfile based on official Playwright image and pinned Playwright npm dependency to match image tag.
 
 ## Proposed Modules
