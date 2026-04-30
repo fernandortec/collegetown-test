@@ -12,5 +12,6 @@ export function useSchoolsQuery() {
     queryKey: schoolQueryKeys.all,
     queryFn: fetchSchools,
     staleTime: oneHourMs,
+    gcTime: oneHourMs,
   });
 }
