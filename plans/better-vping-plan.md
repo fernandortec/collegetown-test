@@ -14,6 +14,7 @@ Durable decisions that apply across all phases:
 - **Routes**:
   - Frontend `/`: full-screen three-school hub.
   - Frontend `/schools/:schoolId`: school comparison/report page.
+  - Frontend routing uses concrete route components for `/` and `/schools/:schoolId`; no app-level discriminated route object.
   - Backend `GET /api/health`: health check.
   - Backend `GET /api/schools`: school metadata.
   - Backend `GET /api/schools/:schoolId/diff`: scrape + diff default snapshot.
@@ -64,17 +65,17 @@ Create the deployable shape for Better VPing: separate frontend and backend apps
 
 ### What to build
 
-Deliver the first end-to-end user path from frontend to backend: load school metadata from the API, render the full-screen three-panel Better VPing home page, and navigate to a school route. This establishes the official school scope, school colors, monograms, default snapshots, route params, and API client pattern.
+Deliver the first end-to-end user path from frontend to backend: load school metadata from the API, render the full-screen three-panel Better VPing home page, and navigate through a concrete `/schools/:schoolId` route component. This establishes the official school scope, school colors, monograms, default snapshots, route params, and API client pattern without a custom route-parsing hook.
 
 ### Acceptance criteria
 
-- [ ] `GET /api/schools` returns Georgia, Virginia Tech, and Wittenberg metadata.
-- [ ] Each school includes current URL, default snapshot metadata, color accents, and monogram.
-- [ ] Home page fills the viewport with three premium red/news-style school panels.
-- [ ] School panels use official color accents and CSS monograms only.
-- [ ] Selecting a school navigates to `/schools/:schoolId`.
-- [ ] Unknown frontend school route shows a clear not-found state.
-- [ ] Unknown backend school id returns a structured not-found error.
+- [x] `GET /api/schools` returns Georgia, Virginia Tech, and Wittenberg metadata.
+- [x] Each school includes current URL, default snapshot metadata, color accents, and monogram.
+- [x] Home page fills the viewport with three premium red/news-style school panels.
+- [x] School panels use official color accents and CSS monograms only.
+- [x] Selecting a school navigates to `/schools/:schoolId`.
+- [x] Unknown frontend school route shows a clear not-found state.
+- [x] Unknown backend school id returns a structured not-found error.
 
 ---
 
