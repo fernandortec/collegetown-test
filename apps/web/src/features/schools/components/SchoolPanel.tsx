@@ -1,13 +1,8 @@
+import { Link } from "react-router-dom";
 import type { School } from "../schemas";
 import { getDefaultSnapshot, withAlpha } from "../utils";
 
-export function SchoolPanel({
-  school,
-  onNavigate,
-}: {
-  school: School;
-  onNavigate: (path: string) => void;
-}) {
+export function SchoolPanel({ school }: { school: School }) {
   const snapshot = getDefaultSnapshot(school);
   const href = `/schools/${school.id}`;
 
@@ -66,17 +61,13 @@ export function SchoolPanel({
             </p>
             <p className="mt-2 text-sm text-white">{snapshot?.label}</p>
           </div>
-          <a
+          <Link
             className="inline-flex w-full items-center justify-between rounded-2xl bg-white px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-neutral-950 transition hover:bg-red-100"
-            href={href}
-            onClick={(event) => {
-              event.preventDefault();
-              onNavigate(href);
-            }}
+            to={href}
           >
             Open school report
             <span aria-hidden="true">→</span>
-          </a>
+          </Link>
         </div>
       </div>
     </article>

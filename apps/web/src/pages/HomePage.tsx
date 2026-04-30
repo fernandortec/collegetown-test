@@ -3,11 +3,7 @@ import { useSchoolsQuery } from "../features/schools/queries";
 import { CatalogErrorPage } from "../shared/components/CatalogErrorPage";
 import { CatalogLoadingPage } from "../shared/components/CatalogLoadingPage";
 
-interface HomePageProps {
-  onNavigate: (path: string) => void;
-}
-
-export function HomePage({ onNavigate }: HomePageProps) {
+export function HomePage() {
   const schoolsQuery = useSchoolsQuery();
 
   if (schoolsQuery.isPending) {
@@ -15,9 +11,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
   }
 
   if (schoolsQuery.isError) {
-    return (
-      <CatalogErrorPage error={schoolsQuery.error} onNavigate={onNavigate} />
-    );
+    return <CatalogErrorPage error={schoolsQuery.error} />;
   }
 
   return (
@@ -40,11 +34,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
         <div className="grid flex-1 gap-4 py-6 md:grid-cols-3">
           {schoolsQuery.data.map((school) => (
-            <SchoolPanel
-              key={school.id}
-              school={school}
-              onNavigate={onNavigate}
-            />
+            <SchoolPanel key={school.id} school={school} />
           ))}
         </div>
       </section>

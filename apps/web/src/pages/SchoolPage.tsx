@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { SourceCard } from "../features/schools/components/SourceCard";
 import { useSchoolsQuery } from "../features/schools/queries";
 import { getDefaultSnapshot, withAlpha } from "../features/schools/utils";
@@ -7,17 +8,14 @@ import { NotFoundPage } from "./NotFoundPage";
 
 interface SchoolPageProps {
   schoolId: string;
-  onNavigate: (path: string) => void;
 }
 
-export function SchoolPage({ schoolId, onNavigate }: SchoolPageProps) {
+export function SchoolPage({ schoolId }: SchoolPageProps) {
   const schoolsQuery = useSchoolsQuery();
 
   if (schoolsQuery.isPending) return <CatalogLoadingPage />;
   if (schoolsQuery.isError) {
-    return (
-      <CatalogErrorPage error={schoolsQuery.error} onNavigate={onNavigate} />
-    );
+    return <CatalogErrorPage error={schoolsQuery.error} />;
   }
 
   const school = schoolsQuery.data.find((item) => item.id === schoolId);
@@ -28,7 +26,6 @@ export function SchoolPage({ schoolId, onNavigate }: SchoolPageProps) {
         eyebrow="Unknown school"
         title="That school is not in this Better VPing catalog."
         body={`No school matches '${schoolId}'. Choose Georgia, Virginia Tech, or Wittenberg.`}
-        onNavigate={onNavigate}
       />
     );
   }
@@ -38,13 +35,12 @@ export function SchoolPage({ schoolId, onNavigate }: SchoolPageProps) {
   return (
     <main className="min-h-screen bg-[#0d0507] px-5 py-6 text-white md:px-8">
       <section className="mx-auto max-w-6xl">
-        <button
-          className="rounded-full border border-red-800/60 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-red-200 transition hover:border-red-500 hover:text-white"
-          type="button"
-          onClick={() => onNavigate("/")}
+        <Link
+          className="inline-flex rounded-full border border-red-800/60 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-red-200 transition hover:border-red-500 hover:text-white"
+          to="/"
         >
           ← School hub
-        </button>
+        </Link>
 
         <div
           className="mt-6 overflow-hidden rounded-[2rem] border bg-neutral-950 shadow-2xl"

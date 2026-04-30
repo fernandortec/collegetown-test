@@ -1,10 +1,4 @@
-import {
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Route, Routes, useLocation, useParams } from "react-router-dom";
 import { HomePage } from "../pages/HomePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { SchoolPage } from "../pages/SchoolPage";
@@ -20,48 +14,31 @@ export function AppRoutes() {
 }
 
 function HomeRoute() {
-  const onNavigate = useAppNavigate();
-
-  return <HomePage onNavigate={onNavigate} />;
+  return <HomePage />;
 }
 
 function SchoolRoute() {
   const { schoolId } = useParams<{ schoolId: string }>();
-  const onNavigate = useAppNavigate();
-
   if (!schoolId) {
     return (
       <NotFoundPage
         eyebrow="Unknown school"
         title="School route is missing an id."
         body="Use /schools/:schoolId to open a Better VPing school report."
-        onNavigate={onNavigate}
       />
     );
   }
 
-  return <SchoolPage schoolId={schoolId} onNavigate={onNavigate} />;
+  return <SchoolPage schoolId={schoolId} />;
 }
 
 function UnknownRoute() {
   const location = useLocation();
-  const onNavigate = useAppNavigate();
-
   return (
     <NotFoundPage
       eyebrow="Not found"
       title="This route does not exist."
       body={`Better VPing could not match '${location.pathname}' to a page.`}
-      onNavigate={onNavigate}
     />
   );
-}
-
-function useAppNavigate() {
-  const navigate = useNavigate();
-
-  return (path: string) => {
-    navigate(path);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 }
