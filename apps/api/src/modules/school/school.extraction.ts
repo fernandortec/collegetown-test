@@ -1,11 +1,9 @@
-import { chromium, errors as playwrightErrors, type Browser } from "playwright";
+import { chromium, errors as playwrightErrors, type Browser, type Page } from "playwright";
 import { z } from "zod";
 
-import { staffScraperRegistry } from "./scrapers/registry";
-import type { ExtractionSource } from "./scrapers/types";
-import type { SchoolId, StaffRecord } from "./school.types";
+import type { School, SchoolId, StaffRecord } from "./school.types";
 
-export type { ExtractionSource } from "./scrapers/types";
+export type ExtractionSource = "current" | "archive";
 
 export class StaffExtractionError extends Error {
   constructor(
@@ -57,12 +55,12 @@ export async function withStaffExtractionBrowser<T>(
 
 export async function extractStaffRecordsFromPage({
   browser,
-  schoolId,
+  school,
   source,
   url,
 }: {
   browser: Browser;
-  schoolId: SchoolId;
+  school: School;
   source: ExtractionSource;
   url: string;
 }): Promise<StaffRecord[]> {
@@ -71,7 +69,7 @@ export async function extractStaffRecordsFromPage({
   page.setDefaultNavigationTimeout(pageTimeoutMs);
 
   try {
-    const config = staffScraperRegistry[schoolId][source];
+    const config = school.scrapers[source];
 
     await page.goto(url, {
       waitUntil: "domcontentloaded",
@@ -88,8 +86,11 @@ export async function extractStaffRecordsFromPage({
       timeout: pageTimeoutMs,
     });
 
-    const records = sanitizeStaffRecords(await config.scrape({ page }), {
-      schoolId,
+    const html = await page.content();
+    const scrapedRecords = await config.scrape(html);
+
+    const records = sanitizeStaffRecords(scrapedRecords, {
+      schoolId: school.id,
       source,
       url,
     });
@@ -99,7 +100,7 @@ export async function extractStaffRecordsFromPage({
         "EMPTY_EXTRACTION",
         `No staff records were extracted from the ${source} source.`,
         502,
-        { schoolId, source, url },
+        { schoolId: school.id, source, url },
       );
     }
 
@@ -112,7 +113,7 @@ export async function extractStaffRecordsFromPage({
         "PAGE_TIMEOUT",
         `Timed out rendering the ${source} source after ${pageTimeoutMs}ms.`,
         504,
-        { schoolId, source, url, timeoutMs: pageTimeoutMs },
+        { schoolId: school.id, source, url, timeoutMs: pageTimeoutMs },
       );
     }
 
@@ -122,14 +123,14 @@ export async function extractStaffRecordsFromPage({
         ? error.message
         : `Failed to render the ${source} source.`,
       502,
-      { schoolId, source, url },
+      { schoolId: school.id, source, url },
     );
   } finally {
     await page.close().catch(() => undefined);
   }
 }
 
-async function cleanupPageChrome(page: Parameters<typeof staffScraperRegistry.georgia.current.scrape>[0]["page"]): Promise<void> {
+async function cleanupPageChrome(page: Page): Promise<void> {
   await page.evaluate(() => {
     const selectors = [
       "script",

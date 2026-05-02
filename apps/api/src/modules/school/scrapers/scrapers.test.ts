@@ -2,14 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { chromium, type Page } from "playwright";
-
 import type { StaffRecord } from "../school.types";
 import { getStaffGeorgiaCurrent, getStaffGeorgiaSnapshot } from "./georgia";
 import { getStaffVirginiaTechCurrent, getStaffVirginiaTechSnapshot } from "./virginia-tech";
 import { getStaffWittenbergCurrent, getStaffWittenbergSnapshot } from "./wittenberg";
 
-type Scraper = (context: { page: Page }) => Promise<StaffRecord[]>;
+type Scraper = (html: string) => Promise<StaffRecord[]> | StaffRecord[];
 
 const sampleDir = path.resolve(process.cwd(), "../../samples");
 
@@ -230,28 +228,18 @@ const cases: Array<{
 ];
 
 async function main(): Promise<void> {
-  const browser = await chromium.launch({ headless: true });
+  for (const testCase of cases) {
+    const content = await readFile(path.join(sampleDir, testCase.sample), "utf8");
+    const actual = await testCase.scraper(content);
 
-  try {
-    for (const testCase of cases) {
-      const page = await browser.newPage();
-      const content = await readFile(path.join(sampleDir, testCase.sample), "utf8");
-      await page.setContent(content);
+    assert.equal(
+      actual.length,
+      testCase.expected.length,
+      `${testCase.name} count`,
+    );
 
-      const actual = await testCase.scraper({ page });
-      await page.close();
-
-      assert.equal(
-        actual.length,
-        testCase.expected.length,
-        `${testCase.name} count`,
-      );
-
-      assert.deepEqual(actual, testCase.expected, testCase.name);
-      console.log(`✓ ${testCase.name}`);
-    }
-  } finally {
-    await browser.close();
+    assert.deepEqual(actual, testCase.expected, testCase.name);
+    console.log(`✓ ${testCase.name}`);
   }
 }
 

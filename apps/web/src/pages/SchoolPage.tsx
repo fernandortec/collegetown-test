@@ -204,7 +204,7 @@ function StaffList({
     <article className="rounded-3xl border border-white/70 bg-white/55 p-5 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#2f756c]">
+          <p className="text-sm font-bold uppercase  text-[#2f756c]">
             {label}
           </p>
           <p className="mt-1 text-sm text-[#526d68]">

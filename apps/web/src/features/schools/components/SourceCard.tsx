@@ -9,9 +9,7 @@ export function SourceCard({
 }) {
   return (
     <article className="rounded-[2rem] border border-white/70 bg-white/60 p-5 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
-      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2f756c]">
-        {label}
-      </p>
+      <p className="text-xs font-bold uppercase  text-[#2f756c]">{label}</p>
       <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-[#14312f]">
         {title}
       </h2>

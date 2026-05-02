@@ -1,3 +1,6 @@
+import { getStaffGeorgiaCurrent, getStaffGeorgiaSnapshot } from "./scrapers/georgia";
+import { getStaffVirginiaTechCurrent, getStaffVirginiaTechSnapshot } from "./scrapers/virginia-tech";
+import { getStaffWittenbergCurrent, getStaffWittenbergSnapshot } from "./scrapers/wittenberg";
 import type { School } from "./school.types";
 
 export const schools: School[] = [
@@ -24,6 +27,16 @@ export const schools: School[] = [
         url: "https://web.archive.org/web/20220701000000/https://georgiadogs.com/staff-directory",
       },
     ],
+    scrapers: {
+      current: {
+        readySelector: ".s-person-card",
+        scrape: getStaffGeorgiaCurrent,
+      },
+      archive: {
+        readySelector: "tr.sidearm-staff-member",
+        scrape: getStaffGeorgiaSnapshot,
+      },
+    },
   },
   {
     id: "virginia-tech",
@@ -48,6 +61,16 @@ export const schools: School[] = [
         url: "https://web.archive.org/web/20220701000000/https://hokiesports.com/staff-directory",
       },
     ],
+    scrapers: {
+      current: {
+        readySelector: "tr.staff-directory-table-member-position",
+        scrape: getStaffVirginiaTechCurrent,
+      },
+      archive: {
+        readySelector: "tr.sidearm-staff-member",
+        scrape: getStaffVirginiaTechSnapshot,
+      },
+    },
   },
   {
     id: "wittenberg",
@@ -72,5 +95,15 @@ export const schools: School[] = [
         url: "https://web.archive.org/web/20210701000000/https://wittenbergtigers.com/information/directory/index",
       },
     ],
+    scrapers: {
+      current: {
+        readySelector: 'tr:has(td[data-title="Name"])',
+        scrape: getStaffWittenbergCurrent,
+      },
+      archive: {
+        readySelector: 'tr:has(td[data-title="Name"])',
+        scrape: getStaffWittenbergSnapshot,
+      },
+    },
   },
 ];

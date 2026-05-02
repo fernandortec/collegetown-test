@@ -15,6 +15,18 @@ export type SchoolColors = {
   text: string;
 };
 
+export type StaffRecord = {
+  name: string;
+  title: string;
+  phone?: string;
+  email?: string;
+};
+
+export type StaffScraperConfig = {
+  readySelector: string;
+  scrape: (html: string) => Promise<StaffRecord[]> | StaffRecord[];
+};
+
 export type School = {
   id: SchoolId;
   name: string;
@@ -25,13 +37,10 @@ export type School = {
   currentUrl: string;
   defaultSnapshotId: string;
   snapshots: SchoolSnapshot[];
-};
-
-export type StaffRecord = {
-  name: string;
-  title: string;
-  phone?: string;
-  email?: string;
+  scrapers: {
+    current: StaffScraperConfig;
+    archive: StaffScraperConfig;
+  };
 };
 
 export type DiffReportStats = {

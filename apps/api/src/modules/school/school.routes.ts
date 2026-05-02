@@ -1,6 +1,10 @@
 import type { Hono } from "hono";
 import { jsonError } from "../../http/responses";
-import { StaffExtractionError } from "./school.extraction";
+import {
+  StaffExtractionError,
+  extractStaffRecordsFromPage,
+  withStaffExtractionBrowser,
+} from "./school.extraction";
 import * as services from "./school.service";
 import type { SchoolResponse, SchoolsResponse } from "./school.types";
 
@@ -37,7 +41,18 @@ export function registerSchoolRoutes(app: Hono): void {
     }
 
     try {
-      return c.json(await services.buildDiffReport(school));
+      const report = await withStaffExtractionBrowser(async (browser) => {
+        return await services.buildDiffReport(school, async (source, url) => {
+          return await extractStaffRecordsFromPage({
+            browser,
+            school,
+            source,
+            url,
+          });
+        });
+      });
+
+      return c.json(report);
     } catch (error) {
       if (error instanceof StaffExtractionError) {
         return jsonError(c, error.status, {

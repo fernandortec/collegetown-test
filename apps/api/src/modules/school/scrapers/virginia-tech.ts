@@ -1,71 +1,64 @@
+import * as cheerio from "cheerio";
 import type { StaffRecord } from "../school.types";
 import { extractSidearmStaffRows, normalizeStaffRecords } from "./scraper-utils";
-import type { StaffScraperContext } from "./types";
 
-export async function getStaffVirginiaTechCurrent({
-  page,
-}: StaffScraperContext): Promise<StaffRecord[]> {
-  const records = await page
-    .locator("tr.staff-directory-table-member-position")
-    .evaluateAll((rows) =>
-      rows.map((row) => {
-        const nameCell = row.querySelector(".staff-directory-table-member-position__name");
-        const titleCell = row.querySelector(".staff-directory-table-member-position__position");
-        const emailCell = row.querySelector(".staff-directory-table-member-position__email");
-        const phoneCell = row.querySelector(".staff-directory-table-member-position__phone");
-        const emailLink = emailCell?.querySelector<HTMLAnchorElement>('a[href^="mailto:"]');
-        const phoneLink = phoneCell?.querySelector<HTMLAnchorElement>('a[href^="tel:"]');
+export function getStaffVirginiaTechCurrent(html: string): StaffRecord[] {
+  const $ = cheerio.load(html);
+  const records: any[] = [];
 
-        return {
-          name: nameCell?.textContent,
-          title: titleCell?.textContent,
-          email: emailLink?.getAttribute("href") ?? emailCell?.textContent,
-          phone: phoneLink?.textContent ?? phoneCell?.textContent,
-        };
-      }),
-    );
+  $("tr.staff-directory-table-member-position").each((_, row) => {
+    const nameCell = $(row).find(".staff-directory-table-member-position__name");
+    const titleCell = $(row).find(".staff-directory-table-member-position__position");
+    const emailCell = $(row).find(".staff-directory-table-member-position__email");
+    const phoneCell = $(row).find(".staff-directory-table-member-position__phone");
+    const emailLink = emailCell.find('a[href^="mailto:"]');
+    const phoneLink = phoneCell.find('a[href^="tel:"]');
+
+    records.push({
+      name: nameCell.text(),
+      title: titleCell.text(),
+      email: emailLink.attr("href") ?? emailCell.text(),
+      phone: phoneLink.text() || phoneCell.text(),
+    });
+  });
 
   if (records.length > 0) return normalizeStaffRecords(records);
 
-  const flattenedRecords = await page
-    .locator('a.staff-directory-table-member-position__link--name')
-    .evaluateAll((links) =>
-      links.map((link) => {
-        let cursor = link.nextElementSibling;
-        let title: string | null | undefined;
-        let email: string | null | undefined;
-        let phone: string | null | undefined;
+  const flattenedRecords: any[] = [];
 
-        while (cursor && !cursor.matches('a.staff-directory-table-member-position__link--name')) {
-          if (!title && cursor.tagName.toLowerCase() === "p") {
-            title = cursor.textContent;
-          }
+  $('a.staff-directory-table-member-position__link--name').each((_, link) => {
+    let cursor = (link as any).nextSibling;
+    let title: string | null | undefined;
+    let email: string | null | undefined;
+    let phone: string | null | undefined;
 
-          if (!email && cursor.matches('a[href^="mailto:"]')) {
-            email = cursor.getAttribute("href") ?? cursor.textContent;
-          }
+    while (cursor && !($(cursor).is('a.staff-directory-table-member-position__link--name'))) {
+      if (!title && cursor.tagName && cursor.tagName.toLowerCase() === "p") {
+        title = $(cursor).text();
+      }
 
-          if (!phone && cursor.matches('a[href^="tel:"]')) {
-            phone = cursor.textContent ?? cursor.getAttribute("href");
-          }
+      if (!email && $(cursor).is('a[href^="mailto:"]')) {
+        email = $(cursor).attr("href") ?? $(cursor).text();
+      }
 
-          cursor = cursor.nextElementSibling;
-        }
+      if (!phone && $(cursor).is('a[href^="tel:"]')) {
+        phone = $(cursor).text() || $(cursor).attr("href");
+      }
 
-        return {
-          name: link.textContent,
-          title,
-          email,
-          phone,
-        };
-      }),
-    );
+      cursor = cursor.nextSibling;
+    }
+
+    flattenedRecords.push({
+      name: $(link).text(),
+      title,
+      email,
+      phone,
+    });
+  });
 
   return normalizeStaffRecords(flattenedRecords);
 }
 
-export async function getStaffVirginiaTechSnapshot({
-  page,
-}: StaffScraperContext): Promise<StaffRecord[]> {
-  return normalizeStaffRecords(await extractSidearmStaffRows(page));
+export function getStaffVirginiaTechSnapshot(html: string): StaffRecord[] {
+  return normalizeStaffRecords(extractSidearmStaffRows(html));
 }

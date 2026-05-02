@@ -1,9 +1,6 @@
-import {
-  extractStaffRecordsFromPage,
-  withStaffExtractionBrowser,
-} from "./school.extraction";
 import { schools } from "./school.catalog";
-import type { DiffReport, School, SchoolSnapshot } from "./school.types";
+import type { DiffReport, School, SchoolSnapshot, StaffRecord } from "./school.types";
+import type { ExtractionSource } from "./school.extraction";
 
 export function listSchools(): School[] {
   return schools;
@@ -26,39 +23,29 @@ export function getDefaultSnapshot(school: School): SchoolSnapshot {
   return snapshot;
 }
 
-export async function buildDiffReport(school: School): Promise<DiffReport> {
+export async function buildDiffReport(
+  school: School,
+  extractor: (source: ExtractionSource, url: string) => Promise<StaffRecord[]>
+): Promise<DiffReport> {
   const snapshot = getDefaultSnapshot(school);
 
-  return withStaffExtractionBrowser(async (browser) => {
-    const currentStaff = await extractStaffRecordsFromPage({
-      browser,
-      schoolId: school.id,
-      source: "current",
-      url: school.currentUrl,
-    });
+  const currentStaff = await extractor("current", school.currentUrl);
+  const archivedStaff = await extractor("archive", snapshot.url);
 
-    const archivedStaff = await extractStaffRecordsFromPage({
-      browser,
-      schoolId: school.id,
-      source: "archive",
-      url: snapshot.url,
-    });
-
-    return {
-      school,
-      sources: {
-        currentUrl: school.currentUrl,
-        archivedUrl: snapshot.url,
-        snapshotId: snapshot.id,
-        snapshotLabel: snapshot.label,
-      },
-      generatedAt: new Date().toISOString(),
-      currentStaff,
-      archivedStaff,
-      stats: {
-        currentCount: currentStaff.length,
-        archivedCount: archivedStaff.length,
-      },
-    };
-  });
+  return {
+    school,
+    sources: {
+      currentUrl: school.currentUrl,
+      archivedUrl: snapshot.url,
+      snapshotId: snapshot.id,
+      snapshotLabel: snapshot.label,
+    },
+    generatedAt: new Date().toISOString(),
+    currentStaff,
+    archivedStaff,
+    stats: {
+      currentCount: currentStaff.length,
+      archivedCount: archivedStaff.length,
+    },
+  };
 }

@@ -1,75 +1,68 @@
+import * as cheerio from "cheerio";
 import type { StaffRecord } from "../school.types";
 import { normalizeStaffRecords } from "./scraper-utils";
-import type { StaffScraperContext } from "./types";
 
-export async function getStaffWittenbergCurrent({
-  page,
-}: StaffScraperContext): Promise<StaffRecord[]> {
-  return getStaffFromDataTitleRows(page);
+export function getStaffWittenbergCurrent(html: string): StaffRecord[] {
+  return getStaffFromDataTitleRows(html);
 }
 
-export async function getStaffWittenbergSnapshot({
-  page,
-}: StaffScraperContext): Promise<StaffRecord[]> {
-  return getStaffFromDataTitleRows(page);
+export function getStaffWittenbergSnapshot(html: string): StaffRecord[] {
+  return getStaffFromDataTitleRows(html);
 }
 
-async function getStaffFromDataTitleRows(
-  page: StaffScraperContext["page"],
-): Promise<StaffRecord[]> {
-  const records = await page.locator('tr:has(td[data-title="Name"])').evaluateAll(function (rows) {
-    return rows.map(function (row) {
-      const nameCell = row.querySelector('td[data-title="Name"], td[data-title="name"]');
-      const titleCell = row.querySelector('td[data-title="Title"], td[data-title="title"]');
-      const phoneCell = row.querySelector('td[data-title="Phone"], td[data-title="phone"]');
-      const emailCell = row.querySelector('td[data-title="E-mail"], td[data-title="e-mail"], td[data-title="Email"], td[data-title="email"]');
-      const emailLink = emailCell?.querySelector<HTMLAnchorElement>('a[href*="mailto:"]');
+function getStaffFromDataTitleRows(html: string): StaffRecord[] {
+  const $ = cheerio.load(html);
+  const records: any[] = [];
 
-      return {
-        name: nameCell?.textContent,
-        title: titleCell?.textContent,
-        phone: phoneCell?.textContent,
-        email: emailLink?.getAttribute("href") ?? emailCell?.textContent,
-      };
+  $('tr:has(td[data-title="Name"])').each((_, row) => {
+    const nameCell = $(row).find('td[data-title="Name"], td[data-title="name"]');
+    const titleCell = $(row).find('td[data-title="Title"], td[data-title="title"]');
+    const phoneCell = $(row).find('td[data-title="Phone"], td[data-title="phone"]');
+    const emailCell = $(row).find('td[data-title="E-mail"], td[data-title="e-mail"], td[data-title="Email"], td[data-title="email"]');
+    const emailLink = emailCell.find('a[href*="mailto:"]');
+
+    records.push({
+      name: nameCell.text(),
+      title: titleCell.text(),
+      phone: phoneCell.text(),
+      email: emailLink.attr("href") ?? emailCell.text(),
     });
   });
 
-  const flattenedRecords = await page
-    .locator('a[href*="/information/directory/bios/"]')
-    .evaluateAll(function (links) {
-      return links.map(function (link) {
-        let cursor: ChildNode | null = link.nextSibling;
-        let title: string | null | undefined;
-        let email: string | null | undefined;
-        let phoneText = "";
+  const flattenedRecords: any[] = [];
 
-        while (cursor) {
-          if (
-            cursor instanceof HTMLAnchorElement &&
-            cursor.href.includes("/information/directory/bios/")
-          ) {
-            break;
-          }
+  $('a[href*="/information/directory/bios/"]').each((_, link) => {
+    let cursor = (link as any).nextSibling;
+    let title: string | null | undefined;
+    let email: string | null | undefined;
+    let phoneText = "";
 
-          if (!title && cursor instanceof HTMLDivElement) {
-            title = cursor.textContent;
-          } else if (!email && cursor instanceof HTMLAnchorElement && cursor.href.includes("mailto:")) {
-            email = cursor.getAttribute("href") ?? cursor.textContent;
-          } else if (cursor.nodeType === Node.TEXT_NODE) {
-            phoneText += ` ${cursor.textContent ?? ""}`;
-          }
+    while (cursor) {
+      if (
+        cursor.tagName && cursor.tagName.toLowerCase() === "a" &&
+        $(cursor).attr("href")?.includes("/information/directory/bios/")
+      ) {
+        break;
+      }
 
-          cursor = cursor.nextSibling;
-        }
+      if (!title && cursor.tagName && cursor.tagName.toLowerCase() === "div") {
+        title = $(cursor).text();
+      } else if (!email && cursor.tagName && cursor.tagName.toLowerCase() === "a" && $(cursor).attr("href")?.includes("mailto:")) {
+        email = $(cursor).attr("href") ?? $(cursor).text();
+      } else if (cursor.nodeType === 3) { // TEXT_NODE
+        phoneText += ` ${cursor.nodeValue ?? ""}`;
+      }
 
-        return {
-          name: link.textContent,
-          title,
-          phone: phoneText,
-          email,
-        };
-      });
+      cursor = cursor.nextSibling;
+    }
+
+    flattenedRecords.push({
+      name: $(link).text(),
+      title,
+      phone: phoneText,
+      email,
     });
+  });
 
   return normalizeStaffRecords([...records, ...flattenedRecords]);
 }
