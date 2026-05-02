@@ -41,52 +41,46 @@ export function SchoolPage({ schoolId }: SchoolPageProps) {
   const snapshot = getDefaultSnapshot(school);
 
   return (
-    <main className="min-h-screen bg-[#0d0507] px-5 py-6 text-white md:px-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_20%_15%,#d9f2ee,transparent_24rem),linear-gradient(135deg,#f6fbfa,#eef2ff)] px-5 py-8 text-[#14312f] md:px-8">
       <section className="mx-auto max-w-6xl">
         <Link
-          className="inline-flex rounded-full border border-red-800/60 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-red-200 transition hover:border-red-500 hover:text-white"
+          className="inline-flex rounded-full border border-white/70 bg-white/60 px-4 py-2 text-sm font-bold text-[#14312f] shadow-sm backdrop-blur transition hover:text-[#2f756c]"
           to="/"
         >
           ← School hub
         </Link>
 
-        <div
-          className="mt-6 overflow-hidden rounded-[2rem] border bg-neutral-950 shadow-2xl"
-          style={{
-            borderColor: withAlpha(school.colors.primary, "99"),
-            boxShadow: `0 2rem 7rem ${withAlpha(school.colors.primary, "26")}`,
-          }}
-        >
-          <div
-            className="relative isolate overflow-hidden p-6 md:p-10"
-            style={{
-              background: `radial-gradient(circle at 78% 12%, ${withAlpha(
-                school.colors.primary,
-                "55",
-              )}, transparent 32%), linear-gradient(135deg, rgba(0, 0, 0, 0.88), ${withAlpha(
-                school.colors.secondary,
-                "44",
-              )})`,
-            }}
-          >
+        <div className="mt-6 overflow-hidden rounded-[2rem] border border-white/70 bg-white/55 shadow-xl shadow-[#9bb8b2]/20 backdrop-blur">
+          <div className="relative isolate overflow-hidden p-8 md:p-12">
             <div
               aria-hidden="true"
-              className="absolute -right-5 top-2 -z-10 text-[8rem] font-black tracking-[-0.12em] opacity-15 md:text-[13rem]"
-              style={{ color: school.colors.accent }}
+              className="absolute -right-8 top-4 -z-10 text-[8rem] font-semibold tracking-[-0.12em] opacity-10 md:text-[13rem]"
+              style={{ color: school.colors.primary }}
             >
               {school.monogram}
             </div>
+            <div className="flex items-center gap-3">
+              <span
+                className="rounded-2xl px-3 py-2 text-sm font-semibold text-white"
+                style={{ backgroundColor: withAlpha(school.colors.primary, "E6") }}
+              >
+                {school.monogram}
+              </span>
+              <span className="rounded-full bg-[#dff4ef] px-3 py-1 text-sm font-bold text-[#2f756c] ring-1 ring-[#2f756c]/10">
+                {school.conference}
+              </span>
+            </div>
 
-            <h1 className="mt-4 max-w-3xl text-5xl font-black tracking-[-0.06em] md:text-7xl">
+            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.045em] md:text-7xl">
               {school.name}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-white/72">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#526d68]">
               Page runs live server-side extraction for current and archived
               staff directories, then shows raw structured records.
             </p>
           </div>
 
-          <div className="grid gap-4 border-t border-white/10 bg-black/30 p-5 md:grid-cols-2 md:p-8">
+          <div className="grid gap-4 border-t border-white/70 bg-white/30 p-5 md:grid-cols-2 md:p-8">
             <SourceCard
               label="Current staff directory"
               title={school.shortName}
@@ -99,7 +93,7 @@ export function SchoolPage({ schoolId }: SchoolPageProps) {
             />
           </div>
 
-          <div className="border-t border-white/10 bg-neutral-950 p-5 md:p-8">
+          <div className="border-t border-white/70 bg-white/45 p-5 md:p-8">
             <ComparisonReport query={diffQuery} />
           </div>
         </div>
@@ -115,17 +109,19 @@ function ComparisonReport({
 }) {
   if (query.isPending) {
     return (
-      <div className="rounded-3xl border border-red-900/70 bg-red-950/20 p-6">
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-red-300">
+      <div className="rounded-3xl border border-white/70 bg-white/55 p-6 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
+        <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#2f756c]">
           Extracting staff
         </p>
-        <h2 className="mt-3 text-3xl font-black">Live extraction running.</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-300">
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
+          Live extraction running.
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526d68]">
           Backend renders both sources with Playwright, cleans page text, and
           asks Gemini for structured staff records.
         </p>
-        <div className="mt-6 h-2 overflow-hidden rounded-full bg-neutral-800">
-          <div className="h-full w-2/3 animate-pulse rounded-full bg-red-400" />
+        <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#c8e6e0]">
+          <div className="h-full w-2/3 animate-pulse rounded-full bg-[#2f756c]" />
         </div>
       </div>
     );
@@ -133,11 +129,11 @@ function ComparisonReport({
 
   if (query.isError) {
     return (
-      <div className="rounded-3xl border border-red-500/50 bg-red-950/30 p-6">
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-red-200">
+      <div className="rounded-3xl border border-[#e8b4a8] bg-[#fff4f1]/80 p-6">
+        <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#8a3b2f]">
           Diff load failed
         </p>
-        <p className="mt-4 font-mono text-sm text-red-50">
+        <p className="mt-4 font-mono text-sm text-[#8a3b2f]">
           {query.error.message}
         </p>
       </div>
@@ -152,13 +148,13 @@ function ReportSuccess({ report }: { report: DiffReport }) {
     <div>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300">
+          <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#2f756c]">
             Staff extracted
           </p>
-          <h2 className="mt-3 text-3xl font-black">
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
             Structured staff records returned.
           </h2>
-          <p className="mt-2 text-sm text-neutral-300">
+          <p className="mt-2 text-sm text-[#526d68]">
             Generated at {new Date(report.generatedAt).toLocaleString()}.
           </p>
         </div>
@@ -186,9 +182,9 @@ function ReportSuccess({ report }: { report: DiffReport }) {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="min-w-28 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
-      <p className="text-3xl font-black">{value}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-neutral-400">
+    <div className="min-w-28 rounded-2xl border border-white/70 bg-white/55 p-4 text-center shadow-sm backdrop-blur">
+      <p className="text-3xl font-semibold">{value}</p>
+      <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#2f756c]">
         {label}
       </p>
     </div>
@@ -205,18 +201,18 @@ function StaffList({
   sourceUrl: string;
 }) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-neutral-950/70 p-5">
+    <article className="rounded-3xl border border-white/70 bg-white/55 p-5 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-red-300">
+          <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#2f756c]">
             {label}
           </p>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-[#526d68]">
             {records.length} records
           </p>
         </div>
         <Link
-          className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-300 underline decoration-red-500"
+          className="text-sm font-bold text-[#14312f] underline decoration-[#2f756c] decoration-2 underline-offset-4 hover:text-[#2f756c]"
           to={sourceUrl}
           rel="noreferrer"
           target="_blank"
@@ -229,23 +225,23 @@ function StaffList({
         {records.map((record, index) => (
           <div
             key={`${record.name}-${index}`}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+            className="rounded-2xl border border-white/70 bg-white/55 p-4"
           >
-            <p className="font-black text-white">{record.name}</p>
-            <p className="mt-1 text-sm text-neutral-300">{record.title}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-400">
+            <p className="font-semibold text-[#14312f]">{record.name}</p>
+            <p className="mt-1 text-sm text-[#526d68]">{record.title}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#526d68]">
               {record.email ? (
-                <span className="rounded-full bg-white/5 px-3 py-1">
+                <span className="rounded-full bg-[#dff4ef] px-3 py-1">
                   {record.email}
                 </span>
               ) : null}
               {record.phone ? (
-                <span className="rounded-full bg-white/5 px-3 py-1">
+                <span className="rounded-full bg-[#dff4ef] px-3 py-1">
                   {record.phone}
                 </span>
               ) : null}
               {!record.email && !record.phone ? (
-                <span className="rounded-full bg-white/5 px-3 py-1">
+                <span className="rounded-full bg-[#dff4ef] px-3 py-1">
                   No contact listed
                 </span>
               ) : null}

@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
+    "test:scrapers": "tsx src/modules/school/scrapers/scrapers.test.ts",
     "start": "node dist/server.js"
   },
   "dependencies": {

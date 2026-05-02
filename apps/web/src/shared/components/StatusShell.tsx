@@ -10,12 +10,12 @@ export function StatusShell({
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#120508] px-5 py-10 text-white md:px-8">
-      <section className="mx-auto max-w-6xl rounded-[2rem] border border-red-900/40 bg-neutral-950/80 p-8 shadow-2xl shadow-red-950/30">
-        <p className="text-xs font-black uppercase tracking-[0.4em] text-red-400">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_20%_15%,#d9f2ee,transparent_24rem),linear-gradient(135deg,#f6fbfa,#eef2ff)] px-5 py-10 text-[#14312f] md:px-8">
+      <section className="mx-auto max-w-6xl rounded-[2rem] border border-white/70 bg-white/60 p-8 shadow-xl shadow-[#9bb8b2]/20 backdrop-blur">
+        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[#2f756c]">
           {eyebrow}
         </p>
-        <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.05em] md:text-6xl">
+        <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-[-0.045em] md:text-6xl">
           {title}
         </h1>
         {children}

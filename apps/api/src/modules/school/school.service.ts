@@ -32,12 +32,14 @@ export async function buildDiffReport(school: School): Promise<DiffReport> {
   return withStaffExtractionBrowser(async (browser) => {
     const currentStaff = await extractStaffRecordsFromPage({
       browser,
+      schoolId: school.id,
       source: "current",
       url: school.currentUrl,
     });
 
     const archivedStaff = await extractStaffRecordsFromPage({
       browser,
+      schoolId: school.id,
       source: "archive",
       url: snapshot.url,
     });

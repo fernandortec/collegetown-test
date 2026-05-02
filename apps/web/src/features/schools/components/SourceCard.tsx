@@ -8,18 +8,18 @@ export function SourceCard({
   url: string;
 }) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-neutral-950/80 p-5">
-      <p className="text-xs font-black uppercase tracking-[0.3em] text-neutral-500">
+    <article className="rounded-[2rem] border border-white/70 bg-white/60 p-5 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
+      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#2f756c]">
         {label}
       </p>
-      <h2 className="mt-3 text-2xl font-black tracking-[-0.04em] text-white">
+      <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-[#14312f]">
         {title}
       </h2>
-      <p className="mt-4 break-all rounded-2xl bg-black/50 p-3 font-mono text-xs leading-5 text-neutral-300">
+      <p className="mt-4 break-all rounded-2xl border border-white/70 bg-white/55 p-3 font-mono text-xs leading-5 text-[#526d68]">
         {url}
       </p>
       <a
-        className="mt-4 inline-flex rounded-full border border-red-800/60 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-red-200 hover:border-red-500 hover:text-white"
+        className="mt-4 inline-flex rounded-full border border-[#9bb8b2]/50 bg-white/50 px-4 py-2 text-sm font-bold text-[#14312f] hover:border-[#2f756c] hover:text-[#2f756c]"
         href={url}
         rel="noreferrer"
         target="_blank"

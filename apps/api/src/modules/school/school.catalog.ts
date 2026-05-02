@@ -61,7 +61,7 @@ export const schools: School[] = [
       accent: "#FFFFFF",
       text: "#FFFFFF",
     },
-    currentUrl: "https://wittenbergtigers.com/staff-directory",
+    currentUrl: "https://wittenbergtigers.com/information/directory",
     defaultSnapshotId: "wittenberg-2021",
     snapshots: [
       {
@@ -69,7 +69,7 @@ export const schools: School[] = [
         label: "Wittenberg — 2021 Wayback snapshot",
         year: 2021,
         capturedAt: "2021-07-01",
-        url: "https://web.archive.org/web/20210701000000/https://wittenbergtigers.com/staff-directory",
+        url: "https://web.archive.org/web/20210701000000/https://wittenbergtigers.com/information/directory/index",
       },
     ],
   },
