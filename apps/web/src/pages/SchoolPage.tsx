@@ -16,14 +16,17 @@ interface SchoolPageProps {
 
 export function SchoolPage({ schoolId }: SchoolPageProps) {
   const schoolsQuery = useSchoolsQuery();
-  const diffQuery = useSchoolDiffQuery(schoolId, schoolsQuery.isSuccess);
+  const school = schoolsQuery.data?.find((item) => item.id === schoolId);
+
+  const diffQuery = useSchoolDiffQuery(
+    schoolId,
+    schoolsQuery.isSuccess && Boolean(school),
+  );
 
   if (schoolsQuery.isPending) return <CatalogLoadingPage />;
   if (schoolsQuery.isError) {
     return <CatalogErrorPage error={schoolsQuery.error} />;
   }
-
-  const school = schoolsQuery.data.find((item) => item.id === schoolId);
 
   if (!school) {
     return (
@@ -216,14 +219,14 @@ function StaffList({
             {records.length} records
           </p>
         </div>
-        <a
+        <Link
           className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-300 underline decoration-red-500"
-          href={sourceUrl}
+          to={sourceUrl}
           rel="noreferrer"
           target="_blank"
         >
           Source
-        </a>
+        </Link>
       </div>
 
       <div className="mt-5 max-h-[34rem] space-y-3 overflow-auto pr-2">
