@@ -35,6 +35,13 @@ export function registerSchoolRoutes(app: Hono): void {
       });
     }
 
-    return c.json(services.buildMockDiffReport(school));
+    try {
+      return c.json(services.buildMockDiffReport(school));
+    } catch (error) {
+      return jsonError(c, 500, {
+        code: "SNAPSHOT_ERROR",
+        message: error instanceof Error ? error.message : "Failed to build diff report.",
+      });
+    }
   });
 }

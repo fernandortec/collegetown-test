@@ -49,7 +49,7 @@ export function SchoolPanel({ school }: { school: School }) {
             {school.shortName}
           </h2>
           <p className="mt-4 text-sm leading-6 text-white/70">
-            Current staff directory monitored against {snapshot?.year} Wayback
+            Current staff directory monitored against {snapshot?.year ?? "a previous"} Wayback
             baseline.
           </p>
         </div>
