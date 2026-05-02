@@ -1,9 +1,31 @@
 import { Hono } from "hono";
-import { registerHttp } from "./http";
 
-export function createApp(): Hono {
-  const app = new Hono();
-  registerHttp(app);
+import { cors } from "hono/cors";
 
-  return app;
-}
+import { jsonError } from "./http/responses";
+import { registerSchoolRoutes } from "./modules/school/school.routes";
+
+const FRONTEND_ORIGINS = ["http://localhost:5173"];
+
+export const app = new Hono();
+
+app.use(
+  "*",
+  cors({
+    origin: FRONTEND_ORIGINS,
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+  }),
+);
+
+app.get("/api/health", (c) =>
+  c.json({ ok: true, service: "better-vping-api" }),
+);
+
+registerSchoolRoutes(app);
+
+app.notFound((c) =>
+  jsonError(c, 404, {
+    message: "Route not found.",
+  }),
+);

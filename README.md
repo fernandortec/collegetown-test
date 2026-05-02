@@ -53,10 +53,12 @@ cd apps/web
 npm run dev
 ```
 
-Health check:
+Health check and catalog:
 
 ```bash
 curl http://localhost:8787/api/health
+curl http://localhost:8787/api/schools
+curl http://localhost:8787/api/schools/georgia/diff
 ```
 
 ## Build

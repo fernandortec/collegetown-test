@@ -1,35 +1,20 @@
-import { Route, Routes, useLocation, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { HomePage } from "../pages/HomePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
-import { SchoolPage } from "../pages/SchoolPage";
+import { SchoolRoute } from "../pages/SchoolPage";
 
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<HomeRoute />} />
-      <Route path="/schools/:schoolId" element={<SchoolRoute />} />
-      <Route path="*" element={<UnknownRoute />} />
-    </Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/schools/:schoolId" element={<SchoolRoute />} />
+        <Route path="*" element={<UnknownRoute />} />
+      </Routes>
+    </>
   );
-}
-
-function HomeRoute() {
-  return <HomePage />;
-}
-
-function SchoolRoute() {
-  const { schoolId } = useParams<{ schoolId: string }>();
-  if (!schoolId) {
-    return (
-      <NotFoundPage
-        eyebrow="Unknown school"
-        title="School route is missing an id."
-        body="Use /schools/:schoolId to open a Better VPing school report."
-      />
-    );
-  }
-
-  return <SchoolPage schoolId={schoolId} />;
 }
 
 function UnknownRoute() {
@@ -43,25 +28,10 @@ function UnknownRoute() {
   );
 }
 
+function ScrollToTop() {
+  const location = useLocation();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -69,3 +39,7 @@ function UnknownRoute() {
       top: 0,
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
+  }, [location.pathname]);
+
+  return null;
+}

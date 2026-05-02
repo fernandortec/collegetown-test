@@ -89,7 +89,7 @@ Implement the first real scraping path for one school from the school page throu
 
 ### Acceptance criteria
 
-- [ ] School page auto-calls `GET /api/schools/:schoolId/diff` for the default snapshot.
+- [x] School page auto-calls `GET /api/schools/:schoolId/diff` for the default snapshot.
 - [ ] Backend uses Playwright server-side, not browser/client scraping.
 - [ ] Current and archived pages scrape sequentially.
 - [ ] Each page scrape times out after 25 seconds.
@@ -97,7 +97,7 @@ Implement the first real scraping path for one school from the school page throu
 - [ ] API response includes school metadata, URLs, scraped timestamp, old/current staff lists, and stats.
 - [ ] Empty scrape fails loudly with a structured error.
 - [ ] Timeout fails loudly with a structured error identifying the failing source.
-- [ ] Frontend displays clear loading, success, and error states.
+- [x] Frontend displays clear loading, success, and error states.
 - [ ] No fake data is shown when scraping fails.
 
 ---
