@@ -25,9 +25,35 @@ export const schoolSchema = z.object({
   snapshots: z.array(schoolSnapshotSchema).min(1),
 });
 
+export const staffRecordSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+});
+
+export const diffReportSchema = z.object({
+  school: schoolSchema,
+  sources: z.object({
+    currentUrl: z.url(),
+    archivedUrl: z.url(),
+    snapshotId: z.string(),
+    snapshotLabel: z.string(),
+  }),
+  generatedAt: z.string(),
+  currentStaff: z.array(staffRecordSchema),
+  archivedStaff: z.array(staffRecordSchema),
+  stats: z.object({
+    currentCount: z.number(),
+    archivedCount: z.number(),
+  }),
+});
+
 export const schoolsResponseSchema = z.object({
   schools: z.array(schoolSchema),
 });
 
 export type School = z.infer<typeof schoolSchema>;
 export type SchoolSnapshot = z.infer<typeof schoolSnapshotSchema>;
+export type StaffRecord = z.infer<typeof staffRecordSchema>;
+export type DiffReport = z.infer<typeof diffReportSchema>;

@@ -27,6 +27,32 @@ export type School = {
   snapshots: SchoolSnapshot[];
 };
 
+export type StaffRecord = {
+  name: string;
+  title: string;
+  phone?: string;
+  email?: string;
+};
+
+export type DiffReportStats = {
+  currentCount: number;
+  archivedCount: number;
+};
+
+export type DiffReport = {
+  school: School;
+  sources: {
+    currentUrl: string;
+    archivedUrl: string;
+    snapshotId: string;
+    snapshotLabel: string;
+  };
+  generatedAt: string;
+  currentStaff: StaffRecord[];
+  archivedStaff: StaffRecord[];
+  stats: DiffReportStats;
+};
+
 export type SchoolsResponse = {
   schools: School[];
 };
