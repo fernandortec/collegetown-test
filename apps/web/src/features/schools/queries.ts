@@ -22,6 +22,10 @@ export function useSchoolDiffQuery(schoolId: string, enabled: boolean) {
     queryKey: schoolQueryKeys.diff(schoolId),
     queryFn: () => fetchDiffReport(schoolId),
     enabled,
+    staleTime: oneHourMs,
+    gcTime: oneHourMs,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     retry: false,
   });
 }
