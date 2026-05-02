@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@layer utilities {
+  @keyframes load-progress {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+  
+  .animate-load-progress {
+    animation: load-progress 25s linear forwards;
+  }
+}

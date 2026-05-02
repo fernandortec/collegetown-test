@@ -121,7 +121,7 @@ function ComparisonReport({
           asks Gemini for structured staff records.
         </p>
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#c8e6e0]">
-          <div className="h-full w-2/3 animate-pulse rounded-full bg-[#2f756c]" />
+          <div className="h-full animate-load-progress rounded-full bg-[#2f756c]" />
         </div>
       </div>
     );
