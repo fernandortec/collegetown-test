@@ -3,7 +3,6 @@ import { env } from "../env";
 
 const errorResponseSchema = z.object({
   error: z.object({
-    code: z.string(),
     message: z.string(),
   }),
 });
@@ -12,7 +11,6 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly code: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -30,22 +28,9 @@ export async function getJson(path: string): Promise<unknown> {
     const message = parsedError.success
       ? parsedError.data.error.message
       : `API request failed with status ${response.status}.`;
-    const code = parsedError.success ? parsedError.data.error.code : "API_ERROR";
 
-    throw new ApiError(message, response.status, code);
+    throw new ApiError(message, response.status);
   }
 
   return jsonData;
-}
-
-export function formatApiError(error: unknown): string {
-  if (error instanceof ApiError) {
-    return `${error.message} (${error.code}, HTTP ${error.status})`;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Unknown API error.";
 }
