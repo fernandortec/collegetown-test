@@ -18,7 +18,7 @@ export const schools: School[] = [
     snapshots: [
       {
         id: "georgia-2022",
-        label: "Georgia staff directory — 2022 Wayback snapshot",
+        label: "Georgia — 2022 Wayback snapshot",
         year: 2022,
         capturedAt: "2022-07-01",
         url: "https://web.archive.org/web/20220701000000/https://georgiadogs.com/staff-directory",
@@ -42,7 +42,7 @@ export const schools: School[] = [
     snapshots: [
       {
         id: "virginia-tech-2022",
-        label: "Virginia Tech staff directory — 2022 Wayback snapshot",
+        label: "Virginia Tech — 2022 Wayback snapshot",
         year: 2022,
         capturedAt: "2022-07-01",
         url: "https://web.archive.org/web/20220701000000/https://hokiesports.com/staff-directory",
@@ -66,7 +66,7 @@ export const schools: School[] = [
     snapshots: [
       {
         id: "wittenberg-2021",
-        label: "Wittenberg staff directory — 2021 Wayback snapshot",
+        label: "Wittenberg — 2021 Wayback snapshot",
         year: 2021,
         capturedAt: "2021-07-01",
         url: "https://web.archive.org/web/20210701000000/https://wittenbergtigers.com/staff-directory",

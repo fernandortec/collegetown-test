@@ -76,15 +76,13 @@ export function SchoolPage({ schoolId }: SchoolPageProps) {
             >
               {school.monogram}
             </div>
-            <p className="text-xs font-black uppercase tracking-[0.4em] text-red-200">
-              Phase 3 tracer bullet
-            </p>
+
             <h1 className="mt-4 max-w-3xl text-5xl font-black tracking-[-0.06em] md:text-7xl">
               {school.name}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/72">
-              Page loads mocked current and archived staff directory diffs while
-              diff engine gets rebuilt from scratch.
+              Page runs live server-side extraction for current and archived
+              staff directories, then shows raw structured records.
             </p>
           </div>
 
@@ -119,14 +117,12 @@ function ComparisonReport({
     return (
       <div className="rounded-3xl border border-red-900/70 bg-red-950/20 p-6">
         <p className="text-xs font-black uppercase tracking-[0.3em] text-red-300">
-          Loading diff
+          Extracting staff
         </p>
-        <h2 className="mt-3 text-3xl font-black">
-          Mock report loading.
-        </h2>
+        <h2 className="mt-3 text-3xl font-black">Live extraction running.</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-300">
-          Backend route returns deterministic mock staff records for current and
-          archived sources.
+          Backend renders both sources with Playwright, cleans page text, and
+          asks Gemini for structured staff records.
         </p>
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-neutral-800">
           <div className="h-full w-2/3 animate-pulse rounded-full bg-red-400" />
@@ -157,7 +153,7 @@ function ReportSuccess({ report }: { report: DiffReport }) {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300">
-            Mock diff loaded
+            Staff extracted
           </p>
           <h2 className="mt-3 text-3xl font-black">
             Structured staff records returned.

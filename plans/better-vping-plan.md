@@ -9,7 +9,7 @@ Durable decisions that apply across all phases:
 - **Product**: Better VPing, a premium red/news-style dashboard for athletics staff directory intelligence.
 - **Frontend deployment**: React + TypeScript + Vite on Vercel.
 - **Backend deployment**: Hono + TypeScript on Render.
-- **Scraping**: Playwright runs server-side. Current and archived pages scrape sequentially with 25s/page timeout.
+- **Scraping/extraction**: Playwright runs server-side to render full staff-directory pages. Backend scrapes current and archived pages sequentially with 25s/page timeout, removes obvious junk DOM, sends cleaned page text to Gemini through the Vercel AI SDK, validates structured staff records, and fails loudly on empty extraction.
 - **Caching**: no server cache. React Query caches diff and email draft results for one hour. Manual refresh invalidates client cache and re-scrapes.
 - **Routes**:
   - Frontend `/`: full-screen three-school hub.
@@ -30,7 +30,7 @@ Durable decisions that apply across all phases:
 - **Diff behavior**: compare structured staff records, not raw HTML. Detect added, removed, title changed, and contact changed.
 - **Matching behavior**: exact normalized name first, conservative fuzzy fallback only when low risk.
 - **Ranking behavior**: seniority and role importance first; contact-only changes lower priority. Show top 5–10, default target 8.
-- **AI boundary**: backend uses Vercel AI SDK/OpenAI. Prompt only uses scraped changes. No outside search. No invented facts. Deterministic fallback when AI key missing.
+- **AI boundary**: backend uses Vercel AI SDK for page extraction. Phase 3 uses Gemini Flash with no outside search and no invented facts. Missing AI configuration fails loudly. Later email-draft AI remains grounded only in scraped changes.
 - **UI preview boundary**: iframes/page previews are best effort. Report remains primary source of value if embedding fails.
 - **Failure policy**: fail loudly on empty scrape, timeout, unknown school, and malformed API responses. No fake successful reports.
 - **Observability policy**: no saved debug artifacts and no backend logs.
@@ -79,26 +79,51 @@ Deliver the first end-to-end user path from frontend to backend: load school met
 
 ---
 
-## Phase 3: One-school live scrape tracer bullet
+## Phase 3: AI-assisted current/archive extraction tracer bullet
 
 **User stories**: 4, 9, 10, 11, 12, 13, 23, 24, 46, 48, 49
 
 ### What to build
 
-Implement the first real scraping path for one school from the school page through the backend and back to the UI. The backend uses Playwright to scrape current and archived pages sequentially, extract structured staff records, and return raw old/current staff lists with stats. The UI auto-runs the diff request on school page load and shows loading, success, and loud failure states.
+Replace mock diff data with real server-side page fetching and AI-based staff extraction. The school page keeps calling `GET /api/schools/:schoolId/diff`. The backend resolves the school and default snapshot, renders the current staff directory and archived Wayback page with Playwright, removes obvious junk DOM, sends cleaned visible page text to Gemini through the Vercel AI SDK, validates structured staff records, and returns raw current/archive staff lists with counts.
+
+This phase does not compute staff changes yet. It proves live page access, archive page access, AI extraction, loud failure behavior, and frontend display of real extracted data.
+
+### Backend flow
+
+1. Receive `GET /api/schools/:schoolId/diff`.
+2. Validate school id and resolve default snapshot.
+3. Launch one Playwright browser for the request.
+4. Render the current URL with a 25 second timeout.
+5. Remove obvious junk DOM: scripts, styles, noscript tags, SVGs, iframes, nav, header, footer, navigation roles, banner roles, contentinfo roles, and the Wayback toolbar.
+6. Read cleaned `document.body.innerText`.
+7. Send cleaned text to Gemini Flash through the Vercel AI SDK.
+8. Validate AI output as `StaffRecord[]` with required `name` and `title`, plus optional `email` and `phone`.
+9. Fail loudly if current extraction returns `0` records.
+10. Repeat the same process for the archived URL.
+11. Close the Playwright browser in `finally`.
+12. Return the existing report shape with current/archive staff lists and stats.
 
 ### Acceptance criteria
 
 - [x] School page auto-calls `GET /api/schools/:schoolId/diff` for the default snapshot.
-- [ ] Backend uses Playwright server-side, not browser/client scraping.
-- [ ] Current and archived pages scrape sequentially.
-- [ ] Each page scrape times out after 25 seconds.
-- [ ] Scraper returns staff records with name, title, optional phone, and optional email.
-- [ ] API response includes school metadata, URLs, scraped timestamp, old/current staff lists, and stats.
-- [ ] Empty scrape fails loudly with a structured error.
-- [ ] Timeout fails loudly with a structured error identifying the failing source.
+- [x] `GET /api/schools/:schoolId/diff` no longer returns mock staff data.
+- [x] Backend uses Playwright server-side to render pages, not browser/client scraping.
+- [x] Current and archived pages are processed sequentially.
+- [x] Each page render times out after 25 seconds.
+- [x] Backend removes obvious junk DOM before AI extraction.
+- [x] AI input is cleaned visible `document.body.innerText`.
+- [x] Gemini Flash is called through the Vercel AI SDK.
+- [x] AI output is validated against the `StaffRecord` schema.
+- [x] Returned records include required `name` and `title`.
+- [x] Returned records may include optional `phone` and `email` when present on the page.
+- [x] API response includes school metadata, source URLs, generated timestamp, current staff, archived staff, and counts.
+- [x] Missing AI configuration fails loudly with a structured error.
+- [x] Page timeout fails loudly with a structured error identifying the failing source.
+- [x] Malformed AI output fails loudly with a structured error identifying the failing source.
+- [x] `0` extracted records from current or archive fails loudly.
 - [x] Frontend displays clear loading, success, and error states.
-- [ ] No fake data is shown when scraping fails.
+- [x] No fake data is shown when extraction fails.
 
 ---
 

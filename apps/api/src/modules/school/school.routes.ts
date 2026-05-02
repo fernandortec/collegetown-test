@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import { jsonError } from "../../http/responses";
+import { StaffExtractionError } from "./school.extraction";
 import * as services from "./school.service";
 import type { SchoolResponse, SchoolsResponse } from "./school.types";
 
@@ -23,7 +24,7 @@ export function registerSchoolRoutes(app: Hono): void {
     return c.json<SchoolResponse>({ school });
   });
 
-  app.get("/api/schools/:schoolId/diff", (c) => {
+  app.get("/api/schools/:schoolId/diff", async (c) => {
     const schoolId = c.req.param("schoolId");
     const school = services.getSchoolById(schoolId);
 
@@ -36,11 +37,20 @@ export function registerSchoolRoutes(app: Hono): void {
     }
 
     try {
-      return c.json(services.buildMockDiffReport(school));
+      return c.json(await services.buildDiffReport(school));
     } catch (error) {
+      if (error instanceof StaffExtractionError) {
+        return jsonError(c, error.status, {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+        });
+      }
+
       return jsonError(c, 500, {
-        code: "SNAPSHOT_ERROR",
-        message: error instanceof Error ? error.message : "Failed to build diff report.",
+        code: "DIFF_REPORT_ERROR",
+        message:
+          error instanceof Error ? error.message : "Failed to build diff report.",
       });
     }
   });
