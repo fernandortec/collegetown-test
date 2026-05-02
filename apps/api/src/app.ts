@@ -26,6 +26,7 @@ registerSchoolRoutes(app);
 
 app.notFound((c) =>
   jsonError(c, 404, {
+    code: "NOT_FOUND",
     message: "Route not found.",
   }),
 );
