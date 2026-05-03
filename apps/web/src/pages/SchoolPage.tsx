@@ -62,7 +62,9 @@ export function SchoolPage({ schoolId }: SchoolPageProps) {
             <div className="flex items-center gap-3">
               <span
                 className="rounded-2xl px-3 py-2 text-sm font-semibold text-white"
-                style={{ backgroundColor: withAlpha(school.colors.primary, "E6") }}
+                style={{
+                  backgroundColor: withAlpha(school.colors.primary, "E6"),
+                }}
               >
                 {school.monogram}
               </span>
@@ -110,15 +112,14 @@ function ComparisonReport({
   if (query.isPending) {
     return (
       <div className="rounded-3xl border border-white/70 bg-white/55 p-6 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
-        <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#2f756c]">
+        <p className="text-sm font-bold uppercase text-[#2f756c]">
           Extracting staff
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
           Live extraction running.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526d68]">
-          Backend renders both sources with Playwright, cleans page text, and
-          asks Gemini for structured staff records.
+          Backend renders both sources with Playwright, cleans page text, detect differs
         </p>
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#c8e6e0]">
           <div className="h-full animate-load-progress rounded-full bg-[#2f756c]" />
@@ -148,7 +149,7 @@ function ReportSuccess({ report }: { report: DiffReport }) {
     <div>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#2f756c]">
+          <p className="text-sm font-bold uppercase text-[#2f756c]">
             Staff extracted
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
@@ -204,9 +205,7 @@ function StaffList({
     <article className="rounded-3xl border border-white/70 bg-white/55 p-5 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-bold uppercase  text-[#2f756c]">
-            {label}
-          </p>
+          <p className="text-sm font-bold uppercase  text-[#2f756c]">{label}</p>
           <p className="mt-1 text-sm text-[#526d68]">
             {records.length} records
           </p>

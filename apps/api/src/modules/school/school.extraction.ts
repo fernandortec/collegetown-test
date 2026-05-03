@@ -89,12 +89,11 @@ export async function extractStaffRecordsFromPage({
       })
       .catch(() => undefined);
 
-    const html = await page.content();
-    const schoolSpecificRecords = await config.scrape(html);
+    const schoolSpecificRecords = await config.scrape(page);
     const scrapedRecords =
       schoolSpecificRecords.length > 0
         ? schoolSpecificRecords
-        : extractGenericStaffRecords(html);
+        : await extractGenericStaffRecords(page);
 
     const records = sanitizeStaffRecords(scrapedRecords, {
       schoolId: school.id,

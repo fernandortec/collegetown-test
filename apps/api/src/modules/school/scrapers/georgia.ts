@@ -1,28 +1,26 @@
-import * as cheerio from "cheerio";
+import type { Page } from "playwright";
+
 import type { StaffRecord } from "../school.types";
 import { extractSidearmStaffRows, normalizeStaffRecords } from "./scraper-utils";
 
-export function getStaffGeorgiaCurrent(html: string): StaffRecord[] {
-  const $ = cheerio.load(html);
-  const records: StaffRecord[] = [];
+export async function getStaffGeorgiaCurrent(page: Page): Promise<StaffRecord[]> {
+  const records = await page.$$eval(".s-person-card", (cards) =>
+    cards.map((card) => {
+      const emailLink = card.querySelector<HTMLAnchorElement>('a[href^="mailto:"]');
+      const phoneLink = card.querySelector<HTMLAnchorElement>('a[href^="tel:"]');
 
-  $(".s-person-card").each((_, card) => {
-    const name = $(card).find("h4").text();
-    const title = $(card).find(".s-person-details__position").text();
-    const emailLink = $(card).find('a[href^="mailto:"]');
-    const phoneLink = $(card).find('a[href^="tel:"]');
-
-    records.push({
-      name,
-      title,
-      email: emailLink.attr("href") ?? emailLink.text(),
-      phone: phoneLink.text() || phoneLink.attr("href"),
-    });
-  });
+      return {
+        name: card.querySelector("h4")?.textContent,
+        title: card.querySelector(".s-person-details__position")?.textContent,
+        email: emailLink?.href ?? emailLink?.textContent,
+        phone: phoneLink?.textContent || phoneLink?.href,
+      };
+    }),
+  );
 
   return normalizeStaffRecords(records);
 }
 
-export function getStaffGeorgiaSnapshot(html: string): StaffRecord[] {
-  return normalizeStaffRecords(extractSidearmStaffRows(html));
+export async function getStaffGeorgiaSnapshot(page: Page): Promise<StaffRecord[]> {
+  return normalizeStaffRecords(await extractSidearmStaffRows(page));
 }

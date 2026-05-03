@@ -22,9 +22,11 @@ export type StaffRecord = {
   email?: string;
 };
 
+import type { Page } from "playwright";
+
 export type StaffScraperConfig = {
   readySelector: string;
-  scrape: (html: string) => Promise<StaffRecord[]> | StaffRecord[];
+  scrape: (page: Page) => Promise<StaffRecord[]> | StaffRecord[];
 };
 
 export type School = {

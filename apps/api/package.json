@@ -15,7 +15,6 @@
     "@ai-sdk/google": "^3.0.67",
     "@hono/node-server": "^1.19.6",
     "ai": "^6.0.174",
-    "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
     "hono": "^4.10.6",
     "playwright": "^1.59.1",

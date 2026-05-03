@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import type { Locator, Page } from "playwright";
 
 import type { StaffRecord } from "../school.types";
 
@@ -81,76 +81,47 @@ export function firstPhone(value?: string | null): string | undefined {
   return match?.[0].trim();
 }
 
-export function extractGenericStaffRecords(html: string): StaffRecord[] {
-  const $ = cheerio.load(html);
+export async function extractGenericStaffRecords(page: Page): Promise<StaffRecord[]> {
   const records: RawStaffRecord[] = [];
 
-  records.push(...extractGenericTableRows($));
-  records.push(...extractGenericCardRows($));
-  records.push(...extractGenericTextRows($));
-
-  return preferRicherRecordsByNameAndTitle(normalizeStaffRecords(records));
-}
-
-function preferRicherRecordsByNameAndTitle(records: StaffRecord[]): StaffRecord[] {
-  const byIdentity = new Map<string, StaffRecord>();
-
-  for (const record of records) {
-    const key = `${record.name}|${record.title}`.toLowerCase();
-    const existing = byIdentity.get(key);
-    if (!existing) {
-      byIdentity.set(key, record);
-      continue;
-    }
-
-    byIdentity.set(key, {
-      ...existing,
-      ...record,
-      email: existing.email ?? record.email,
-      phone: existing.phone ?? record.phone,
-    });
-  }
-
-  return [...byIdentity.values()];
-}
-
-function extractGenericTableRows($: cheerio.CheerioAPI): RawStaffRecord[] {
-  const records: RawStaffRecord[] = [];
-
-  $("tr").each((_, row) => {
-    const cells = $(row).find("th, td").toArray();
-    if (cells.length < 2) return;
+  const rows = page.locator("tr");
+  for (let rowIndex = 0; rowIndex < await rows.count(); rowIndex += 1) {
+    const row = rows.nth(rowIndex);
+    const cells = row.locator("th, td");
+    const cellCount = await cells.count();
+    if (cellCount < 2) continue;
 
     const mapped: RawStaffRecord = {};
     const looseText: string[] = [];
 
-    for (const cell of cells) {
-      const cellNode = $(cell);
-      const label = (cellNode.attr("data-title") ??
-        cellNode.attr("headers") ??
-        cellNode.attr("aria-label") ??
-        cellNode.attr("class") ??
+    for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
+      const cell = cells.nth(cellIndex);
+      const label = ((await cell.getAttribute("data-title")) ??
+        (await cell.getAttribute("headers")) ??
+        (await cell.getAttribute("aria-label")) ??
+        (await cell.getAttribute("class")) ??
         "")
         .replace(/[_-]+/g, " ")
         .toLowerCase();
-      const value = cellNode.text();
-      const emailLink = cellNode.find('a[href*="mailto:"]').attr("href");
-      const phoneLink = cellNode.find('a[href*="tel:"]').text() || cellNode.find('a[href*="tel:"]').attr("href");
+      const value = await cell.textContent();
+      const emailAnchor = cell.locator('a[href*="mailto:"]').first();
+      const phoneAnchor = cell.locator('a[href*="tel:"]').first();
+      const emailLink = await optionalAttribute(emailAnchor, "href");
+      const phoneLink = (await optionalText(phoneAnchor)) || (await optionalAttribute(phoneAnchor, "href"));
 
       if (isNameLabel(label)) mapped.name ??= value;
       else if (isTitleLabel(label)) mapped.title ??= value;
       else if (isEmailLabel(label)) mapped.email ??= emailLink ?? value;
       else if (isPhoneLabel(label)) mapped.phone ??= phoneLink ?? value;
-      else looseText.push(value);
+      else looseText.push(value ?? "");
 
       mapped.email ??= emailLink;
       mapped.phone ??= phoneLink;
     }
 
-    const normalized = normalizeStaffRecords([mapped]);
-    if (normalized.length > 0) {
+    if (normalizeStaffRecords([mapped]).length > 0) {
       records.push(mapped);
-      return;
+      continue;
     }
 
     const values = looseText.map(cleanText).filter(Boolean);
@@ -162,13 +133,8 @@ function extractGenericTableRows($: cheerio.CheerioAPI): RawStaffRecord[] {
         phone: values.find((value) => firstPhone(value)),
       });
     }
-  });
+  }
 
-  return records;
-}
-
-function extractGenericCardRows($: cheerio.CheerioAPI): RawStaffRecord[] {
-  const records: RawStaffRecord[] = [];
   const selector = [
     '[class*="staff"]',
     '[class*="person"]',
@@ -179,18 +145,22 @@ function extractGenericCardRows($: cheerio.CheerioAPI): RawStaffRecord[] {
     '[itemtype*="Person"]',
   ].join(",");
 
-  $(selector).each((_, element) => {
-    const card = $(element);
-    if (card.find(selector).length > 0) return;
+  const cards = page.locator(selector);
+  for (let cardIndex = 0; cardIndex < await cards.count(); cardIndex += 1) {
+    const card = cards.nth(cardIndex);
+    if (await card.locator(selector).count() > 0) continue;
 
-    const emailLink = card.find('a[href*="mailto:"]').first();
-    const phoneLink = card.find('a[href*="tel:"]').first();
-    const text = card.text();
-    if (!firstEmail(emailLink.attr("href") ?? text) && !firstPhone(phoneLink.text() || (phoneLink.attr("href") ?? text))) {
-      return;
+    const emailLink = card.locator('a[href*="mailto:"]').first();
+    const phoneLink = card.locator('a[href*="tel:"]').first();
+    const text = await card.textContent();
+    const emailValue = await linkValue(emailLink, text);
+    const phoneValue = await linkValue(phoneLink, text, { preferText: true });
+
+    if (!firstEmail(emailValue) && !firstPhone(phoneValue)) {
+      continue;
     }
 
-    const name = firstNonEmptyText(card, [
+    const name = await firstNonEmptyText(card, [
       '[class*="name"]',
       "h1",
       "h2",
@@ -202,7 +172,7 @@ function extractGenericCardRows($: cheerio.CheerioAPI): RawStaffRecord[] {
       "b",
       'a:not([href*="mailto:"]):not([href*="tel:"])',
     ]);
-    const title = firstNonEmptyText(card, [
+    const title = await firstNonEmptyText(card, [
       '[class*="title"]',
       '[class*="position"]',
       '[class*="role"]',
@@ -214,22 +184,17 @@ function extractGenericCardRows($: cheerio.CheerioAPI): RawStaffRecord[] {
     records.push({
       name,
       title,
-      email: emailLink.attr("href") ?? emailLink.text() ?? text,
-      phone: phoneLink.text() || phoneLink.attr("href") || text,
+      email: emailValue,
+      phone: phoneValue,
     });
-  });
+  }
 
-  return records;
-}
-
-function extractGenericTextRows($: cheerio.CheerioAPI): RawStaffRecord[] {
-  const bodyText = $("body").text() || $.root().text();
+  const bodyText = (await page.locator("body").textContent()) || (await page.locator("html").textContent()) || "";
   const lines = bodyText
     .split(/\r?\n+/)
     .map(cleanText)
     .filter(Boolean)
     .filter((line) => !/^(staff directory|search|filter|print|download|menu|home)$/i.test(line));
-  const records: RawStaffRecord[] = [];
 
   for (let index = 0; index < lines.length; index += 1) {
     const window = lines.slice(index, index + 6);
@@ -255,21 +220,44 @@ function extractGenericTextRows($: cheerio.CheerioAPI): RawStaffRecord[] {
     index += nameIndex + 1;
   }
 
-  return records;
+  return preferRicherRecordsByNameAndTitle(normalizeStaffRecords(records));
 }
 
-function firstNonEmptyText(
-  root: cheerio.Cheerio<any>,
+async function optionalText(locator: Locator): Promise<string | null> {
+  if (await locator.count() === 0) return null;
+  return locator.textContent();
+}
+
+async function optionalAttribute(locator: Locator, name: string): Promise<string | null> {
+  if (await locator.count() === 0) return null;
+  return locator.getAttribute(name);
+}
+
+async function linkValue(
+  locator: Locator,
+  fallback: string | null,
+  options: { preferText?: boolean } = {},
+): Promise<string | null> {
+  const href = await optionalAttribute(locator, "href");
+  const text = await optionalText(locator);
+
+  return options.preferText
+    ? text || href || fallback
+    : href || text || fallback;
+}
+
+async function firstNonEmptyText(
+  root: Locator,
   selectors: string[],
   except?: string | null,
-): string | undefined {
+): Promise<string | undefined> {
   const exceptText = cleanText(except);
 
   for (const selector of selectors) {
-    const direct = cleanText(root.children(selector).first().text());
+    const direct = cleanText(await optionalText(root.locator(`:scope > ${selector}`).first()));
     if (direct && direct !== exceptText) return direct;
 
-    const nested = cleanText(root.find(selector).first().text());
+    const nested = cleanText(await optionalText(root.locator(selector).first()));
     if (nested && nested !== exceptText) return nested;
   }
 
@@ -303,61 +291,83 @@ function isLikelyTitle(line: string): boolean {
   return /director|coach|coordinator|assistant|associate|athletic|athletics|administrator|trainer|nutrition|counselor|psychologist|operations|communications|compliance|president|staff/i.test(line);
 }
 
-export function extractSidearmStaffRows(html: string): RawStaffRecord[] {
-  const $ = cheerio.load(html);
-  const rows: RawStaffRecord[] = [];
+function preferRicherRecordsByNameAndTitle(records: StaffRecord[]): StaffRecord[] {
+  const byIdentity = new Map<string, StaffRecord>();
 
-  $("tr.sidearm-staff-member").each((_, element) => {
-    const row = $(element);
-    const nameCell = row.find('[headers*="col-fullname"], th');
-    const titleCell = row.find('[headers*="col-staff_title"]');
-    const phoneCell = row.find('[headers*="col-staff_phone"]');
-    const emailCell = row.find('[headers*="col-staff_email"]');
-    const emailLink = emailCell.find('a[href*="mailto:"]');
-
-    rows.push({
-      name: nameCell.text(),
-      title: titleCell.text(),
-      phone: phoneCell.text(),
-      email: emailLink.attr("href") ?? emailCell.text(),
-    });
-  });
-
-  if (rows.length > 0) return rows;
-
-  $('a[href*="staff-directory"]').each((_, element) => {
-    const link = $(element);
-    const aria = link.attr("aria-label") ?? "";
-    const ariaParts = aria.split(":").map((part) => part.trim()).filter(Boolean);
-    let cursor = element.nextSibling;
-    let email: string | null | undefined;
-    let phone: string | null | undefined;
-    let text = "";
-
-    while (cursor && !($(cursor).is('a[href*="staff-directory"]'))) {
-      const nodeText = $(cursor).text() || (cursor.nodeType === 3 ? cursor.nodeValue : "");
-      text += ` ${nodeText ?? ""}`;
-
-      if (!email && $(cursor).is('a[href*="mailto:"]')) {
-        email = $(cursor).attr("href") ?? $(cursor).text();
-      }
-
-      if (!phone && $(cursor).is('a[href*="tel:"]')) {
-        phone = $(cursor).text() || $(cursor).attr("href");
-      }
-
-      cursor = cursor.nextSibling;
+  for (const record of records) {
+    const key = `${record.name}|${record.title}`.toLowerCase();
+    const existing = byIdentity.get(key);
+    if (!existing) {
+      byIdentity.set(key, record);
+      continue;
     }
 
-    rows.push({
-      name: link.text(),
-      title: ariaParts.length >= 3 ? ariaParts[1] : undefined,
-      phone: phone ?? text,
-      email,
+    byIdentity.set(key, {
+      ...existing,
+      ...record,
+      email: existing.email ?? record.email,
+      phone: existing.phone ?? record.phone,
     });
-  });
+  }
 
-  return rows;
+  return [...byIdentity.values()];
+}
+
+export async function extractSidearmStaffRows(page: Page): Promise<RawStaffRecord[]> {
+  return page.evaluate<RawStaffRecord[]>(() => {
+    const rows: RawStaffRecord[] = [];
+
+    for (const element of document.querySelectorAll("tr.sidearm-staff-member")) {
+      const nameCell = element.querySelector('[headers*="col-fullname"], th');
+      const titleCell = element.querySelector('[headers*="col-staff_title"]');
+      const phoneCell = element.querySelector('[headers*="col-staff_phone"]');
+      const emailCell = element.querySelector('[headers*="col-staff_email"]');
+      const emailLink = emailCell?.querySelector<HTMLAnchorElement>('a[href*="mailto:"]');
+
+      rows.push({
+        name: nameCell?.textContent,
+        title: titleCell?.textContent,
+        phone: phoneCell?.textContent,
+        email: emailLink?.href ?? emailCell?.textContent,
+      });
+    }
+
+    if (rows.length > 0) return rows;
+
+    for (const element of document.querySelectorAll<HTMLAnchorElement>('a[href*="staff-directory"]')) {
+      const aria = element.getAttribute("aria-label") ?? "";
+      const ariaParts = aria.split(":").map((part) => part.trim()).filter(Boolean);
+      let cursor = element.nextSibling;
+      let email: string | null | undefined;
+      let phone: string | null | undefined;
+      let text = "";
+
+      while (cursor) {
+        if (cursor instanceof HTMLAnchorElement && cursor.href.includes("staff-directory")) break;
+
+        text += ` ${cursor.textContent ?? ""}`;
+
+        if (!email && cursor instanceof HTMLAnchorElement && cursor.href.includes("mailto:")) {
+          email = cursor.href || cursor.textContent;
+        }
+
+        if (!phone && cursor instanceof HTMLAnchorElement && cursor.href.includes("tel:")) {
+          phone = cursor.textContent || cursor.href;
+        }
+
+        cursor = cursor.nextSibling;
+      }
+
+      rows.push({
+        name: element.textContent,
+        title: ariaParts.length >= 3 ? ariaParts[1] : undefined,
+        phone: phone ?? text,
+        email,
+      });
+    }
+
+    return rows;
+  });
 }
 
 function stripLabels(value: string): string {

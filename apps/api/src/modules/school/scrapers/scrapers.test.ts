@@ -2,13 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { chromium, type Page } from "playwright";
+
 import type { StaffRecord } from "../school.types";
 import { getStaffGeorgiaCurrent, getStaffGeorgiaSnapshot } from "./georgia";
 import { extractGenericStaffRecords } from "./scraper-utils";
 import { getStaffVirginiaTechCurrent, getStaffVirginiaTechSnapshot } from "./virginia-tech";
 import { getStaffWittenbergCurrent, getStaffWittenbergSnapshot } from "./wittenberg";
 
-type Scraper = (html: string) => Promise<StaffRecord[]> | StaffRecord[];
+type Scraper = (page: Page) => Promise<StaffRecord[]> | StaffRecord[];
 
 const sampleDir = path.resolve(process.cwd(), "../../samples");
 
@@ -228,10 +230,22 @@ const cases: Array<{
   },
 ];
 
+async function withPage<T>(html: string, action: (page: Page) => Promise<T>): Promise<T> {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+
+  try {
+    await page.setContent(html);
+    return await action(page);
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main(): Promise<void> {
   for (const testCase of cases) {
     const content = await readFile(path.join(sampleDir, testCase.sample), "utf8");
-    const actual = await testCase.scraper(content);
+    const actual = await withPage(content, (page) => Promise.resolve(testCase.scraper(page)));
 
     assert.equal(
       actual.length,
@@ -244,7 +258,7 @@ async function main(): Promise<void> {
   }
 
   assert.deepEqual(
-    extractGenericStaffRecords(`
+    await withPage(`
       <table>
         <tr><th>Name</th><th>Title</th><th>Email</th><th>Phone</th></tr>
         <tr>
@@ -254,7 +268,7 @@ async function main(): Promise<void> {
           <td data-title="Phone"><a href="tel:555-123-4567">555-123-4567</a></td>
         </tr>
       </table>
-    `),
+    `, extractGenericStaffRecords),
     [
       {
         name: "Alex Stone",
@@ -268,13 +282,13 @@ async function main(): Promise<void> {
   console.log("✓ generic fallback table layout");
 
   assert.deepEqual(
-    extractGenericStaffRecords(`
+    await withPage(`
       <section class="profile-card">
         <h3>Jordan Hale</h3>
         <p class="position">Director of Athletics Communications</p>
         <a href="mailto:jhale@example.edu">jhale@example.edu</a>
       </section>
-    `),
+    `, extractGenericStaffRecords),
     [
       {
         name: "Jordan Hale",
@@ -287,14 +301,14 @@ async function main(): Promise<void> {
   console.log("✓ generic fallback card layout");
 
   assert.deepEqual(
-    extractGenericStaffRecords(`
+    await withPage(`
       <main>
         Taylor Reed
         Assistant Coach
         treed@example.edu
         555-987-6543
       </main>
-    `),
+    `, extractGenericStaffRecords),
     [
       {
         name: "Taylor Reed",
