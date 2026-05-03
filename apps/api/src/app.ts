@@ -7,8 +7,8 @@ import { registerSchoolRoutes } from "./modules/school/school.routes";
 
 const FRONTEND_ORIGINS = [
   "http://localhost:5173",
-  "https://collegetown-test-fernandortecs-projects.vercel.app/",
-  "https://collegetown-test.vercel.app/",
+  "https://collegetown-test-fernandortecs-projects.vercel.app",
+  "https://collegetown-test.vercel.app",
 ];
 
 export const app = new Hono();
