@@ -22,7 +22,7 @@ export function HomePage() {
             Better VPing
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-[-0.045em] md:text-7xl">
-            Quiet academic software with polished, modern depth.
+            All university information in one place.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-[#526d68]">
             Monitor current public staff directories against archived Wayback

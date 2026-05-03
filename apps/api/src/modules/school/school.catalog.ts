@@ -97,11 +97,11 @@ export const schools: School[] = [
     ],
     scrapers: {
       current: {
-        readySelector: 'tr:has(td[data-title="Name"])',
+        readySelector: 'tr:has(td[data-title="Name"], td[data-title="name"])',
         scrape: getStaffWittenbergCurrent,
       },
       archive: {
-        readySelector: 'tr:has(td[data-title="Name"])',
+        readySelector: 'tr:has(td[data-title="Name"], td[data-title="name"])',
         scrape: getStaffWittenbergSnapshot,
       },
     },

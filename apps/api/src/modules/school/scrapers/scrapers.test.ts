@@ -1,12 +1,12 @@
-import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { chromium, type Page } from "playwright";
+import { describe, expect, it } from "vitest";
 
 import type { StaffRecord } from "../school.types";
 import { getStaffGeorgiaCurrent, getStaffGeorgiaSnapshot } from "./georgia";
-import { extractGenericStaffRecords } from "./scraper-utils";
+import { cleanText, cleanTitle, extractGenericStaffRecords, normalizeStaffRecords } from "./scraper-utils";
 import { getStaffVirginiaTechCurrent, getStaffVirginiaTechSnapshot } from "./virginia-tech";
 import { getStaffWittenbergCurrent, getStaffWittenbergSnapshot } from "./wittenberg";
 
@@ -242,87 +242,188 @@ async function withPage<T>(html: string, action: (page: Page) => Promise<T>): Pr
   }
 }
 
-async function main(): Promise<void> {
+describe("school scrapers", () => {
   for (const testCase of cases) {
-    const content = await readFile(path.join(sampleDir, testCase.sample), "utf8");
-    const actual = await withPage(content, (page) => Promise.resolve(testCase.scraper(page)));
+    it(testCase.name, async () => {
+      const content = await readFile(path.join(sampleDir, testCase.sample), "utf8");
+      const actual = await withPage(content, (page) => Promise.resolve(testCase.scraper(page)));
 
-    assert.equal(
-      actual.length,
-      testCase.expected.length,
-      `${testCase.name} count`,
-    );
-
-    assert.deepEqual(actual, testCase.expected, testCase.name);
-    console.log(`✓ ${testCase.name}`);
+      expect(actual).toHaveLength(testCase.expected.length);
+      expect(actual).toEqual(testCase.expected);
+    });
   }
 
-  assert.deepEqual(
-    await withPage(`
-      <table>
-        <tr><th>Name</th><th>Title</th><th>Email</th><th>Phone</th></tr>
-        <tr>
-          <td data-title="Name">Alex Stone</td>
-          <td data-title="Title">Associate Athletics Director</td>
-          <td data-title="Email"><a href="mailto:astone@example.edu">Email</a></td>
-          <td data-title="Phone"><a href="tel:555-123-4567">555-123-4567</a></td>
-        </tr>
-      </table>
-    `, extractGenericStaffRecords),
-    [
+  it("extracts Wittenberg rows with lowercase data-title name", async () => {
+    await expect(
+      withPage(
+        `
+          <table>
+            <tr>
+              <td data-title="name"><a href="/information/directory/bios/alex-stone">Alex Stone</a></td>
+              <td data-title="Title">Associate Athletics Director</td>
+              <td data-title="Email"><a href="mailto:astone@wittenberg.edu">Email</a></td>
+              <td data-title="Phone">937-555-1234</td>
+            </tr>
+          </table>
+        `,
+        getStaffWittenbergCurrent,
+      ),
+    ).resolves.toEqual([
+      {
+        name: "Alex Stone",
+        title: "Associate Athletics Director",
+        email: "astone@wittenberg.edu",
+        phone: "937-555-1234",
+      },
+    ]);
+  });
+
+  it("extracts Wittenberg sibling cells from bio links", async () => {
+    await expect(
+      withPage(
+        `
+          <table>
+            <tr>
+              <td><a href="/information/directory/bios/jordan-hale">Jordan Hale</a></td>
+              <td data-title="Title">Director of Athletics Communications</td>
+              <td data-title="Email"><a href="mailto:jhale@wittenberg.edu">Email</a></td>
+              <td data-title="Phone">937-555-5678</td>
+            </tr>
+          </table>
+        `,
+        getStaffWittenbergSnapshot,
+      ),
+    ).resolves.toEqual([
+      {
+        name: "Jordan Hale",
+        title: "Director of Athletics Communications",
+        email: "jhale@wittenberg.edu",
+        phone: "937-555-5678",
+      },
+    ]);
+  });
+
+  it("extracts generic fallback table layout", async () => {
+    await expect(
+      withPage(`
+        <table>
+          <tr><th>Name</th><th>Title</th><th>Email</th><th>Phone</th></tr>
+          <tr>
+            <td data-title="Name">Alex Stone</td>
+            <td data-title="Title">Associate Athletics Director</td>
+            <td data-title="Email"><a href="mailto:astone@example.edu">Email</a></td>
+            <td data-title="Phone"><a href="tel:555-123-4567">555-123-4567</a></td>
+          </tr>
+        </table>
+      `, extractGenericStaffRecords),
+    ).resolves.toEqual([
       {
         name: "Alex Stone",
         title: "Associate Athletics Director",
         email: "astone@example.edu",
         phone: "555-123-4567",
       },
-    ],
-    "generic fallback table layout",
-  );
-  console.log("✓ generic fallback table layout");
+    ]);
+  });
 
-  assert.deepEqual(
-    await withPage(`
-      <section class="profile-card">
-        <h3>Jordan Hale</h3>
-        <p class="position">Director of Athletics Communications</p>
-        <a href="mailto:jhale@example.edu">jhale@example.edu</a>
-      </section>
-    `, extractGenericStaffRecords),
-    [
+  it("extracts generic fallback card layout", async () => {
+    await expect(
+      withPage(`
+        <section class="profile-card">
+          <h3>Jordan Hale</h3>
+          <p class="position">Director of Athletics Communications</p>
+          <a href="mailto:jhale@example.edu">jhale@example.edu</a>
+        </section>
+      `, extractGenericStaffRecords),
+    ).resolves.toEqual([
       {
         name: "Jordan Hale",
         title: "Director of Athletics Communications",
         email: "jhale@example.edu",
       },
-    ],
-    "generic fallback card layout",
-  );
-  console.log("✓ generic fallback card layout");
+    ]);
+  });
 
-  assert.deepEqual(
-    await withPage(`
-      <main>
-        Taylor Reed
-        Assistant Coach
-        treed@example.edu
-        555-987-6543
-      </main>
-    `, extractGenericStaffRecords),
-    [
+  it("extracts generic fallback text layout", async () => {
+    await expect(
+      withPage(`
+        <main>
+          Taylor Reed
+          Assistant Coach
+          treed@example.edu
+          555-987-6543
+        </main>
+      `, extractGenericStaffRecords),
+    ).resolves.toEqual([
       {
         name: "Taylor Reed",
         title: "Assistant Coach",
         email: "treed@example.edu",
         phone: "555-987-6543",
       },
-    ],
-    "generic fallback text layout",
-  );
-  console.log("✓ generic fallback text layout");
-}
+    ]);
+  });
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exitCode = 1;
+  it("preserves Title IX titles", () => {
+    expect(cleanTitle("Title IX Coordinator")).toBe("Title IX Coordinator");
+    expect(cleanText("Title IX Coordinator")).toBe("Title IX Coordinator");
+  });
+
+  it("dedupes equivalent phone formats", () => {
+    expect(
+      normalizeStaffRecords([
+        {
+          name: "Gary Bennett, Ph.D.",
+          title: "Senior Associate Athletics Director, Clinical and Sport Psychologist",
+          email: "gabennet@vt.edu",
+          phone: "(540) 449-4597",
+        },
+        {
+          name: "Gary Bennett, Ph.D.",
+          title: "Senior Associate Athletics Director, Clinical and Sport Psychologist",
+          email: "gabennet@vt.edu",
+          phone: "540-449-4597",
+        },
+      ]),
+    ).toEqual([
+      {
+        name: "Gary Bennett, Ph.D.",
+        title: "Senior Associate Athletics Director, Clinical and Sport Psychologist",
+        email: "gabennet@vt.edu",
+        phone: "(540) 449-4597",
+      },
+    ]);
+  });
+
+  it("handles internationalized names in generic fallback text", async () => {
+    await expect(
+      withPage(
+        `
+          <main>
+            María de la Cruz
+            Associate Athletics Director
+            mcruz@example.edu
+            555-987-6543
+
+            Renée O’Connell
+            Staff Counselor
+            roconnell@example.edu
+          </main>
+        `,
+        extractGenericStaffRecords,
+      ),
+    ).resolves.toEqual([
+      {
+        name: "María de la Cruz",
+        title: "Associate Athletics Director",
+        email: "mcruz@example.edu",
+        phone: "555-987-6543",
+      },
+      {
+        name: "Renée O’Connell",
+        title: "Staff Counselor",
+        email: "roconnell@example.edu",
+      },
+    ]);
+  });
 });

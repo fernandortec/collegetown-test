@@ -9,7 +9,9 @@ export type RawStaffRecord = {
   phone?: string | null;
 };
 
-export function normalizeStaffRecords(records: RawStaffRecord[]): StaffRecord[] {
+export function normalizeStaffRecords(
+  records: RawStaffRecord[],
+): StaffRecord[] {
   const seen = new Set<string>();
   const normalized: StaffRecord[] = [];
 
@@ -32,7 +34,7 @@ export function normalizeStaffRecords(records: RawStaffRecord[]): StaffRecord[] 
       normalizedRecord.name,
       normalizedRecord.title,
       normalizedRecord.email ?? "",
-      normalizedRecord.phone ?? "",
+      phoneDedupKey(normalizedRecord.phone) ?? "",
     ]
       .join("|")
       .toLowerCase();
@@ -46,14 +48,13 @@ export function normalizeStaffRecords(records: RawStaffRecord[]): StaffRecord[] 
 }
 
 export function cleanText(value?: string | null): string {
-  return stripLabels(value ?? "")
-    .replace(/\u00a0/g, " ")
+  return stripFieldLabel(value ?? "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 export function cleanTitle(value?: string | null): string {
-  return stripLabels(value ?? "")
+  return stripFieldLabel(value ?? "")
     .replace(/\u00a0/g, " ")
     .split(/\r?\n+/)
     .map((part) => part.replace(/\s+/g, " ").trim())
@@ -62,7 +63,7 @@ export function cleanTitle(value?: string | null): string {
 }
 
 export function firstEmail(value?: string | null): string | undefined {
-  const match = stripLabels(value ?? "")
+  const match = stripContactLabel(value ?? "")
     .replace(/^.*mailto:/i, "mailto:")
     .match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
 
@@ -70,22 +71,26 @@ export function firstEmail(value?: string | null): string | undefined {
 }
 
 export function firstPhone(value?: string | null): string | undefined {
-  const cleaned = stripLabels(value ?? "")
+  const cleaned = stripContactLabel(value ?? "")
     .replace(/\u00a0/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
   if (!cleaned) return undefined;
 
-  const match = cleaned.match(/(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]\d{4}|\d{3}-\d{4}/);
+  const match = cleaned.match(
+    /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]\d{4}|\d{3}-\d{4}/,
+  );
   return match?.[0].trim();
 }
 
-export async function extractGenericStaffRecords(page: Page): Promise<StaffRecord[]> {
+export async function extractGenericStaffRecords(
+  page: Page,
+): Promise<StaffRecord[]> {
   const records: RawStaffRecord[] = [];
 
   const rows = page.locator("tr");
-  for (let rowIndex = 0; rowIndex < await rows.count(); rowIndex += 1) {
+  for (let rowIndex = 0; rowIndex < (await rows.count()); rowIndex += 1) {
     const row = rows.nth(rowIndex);
     const cells = row.locator("th, td");
     const cellCount = await cells.count();
@@ -96,18 +101,22 @@ export async function extractGenericStaffRecords(page: Page): Promise<StaffRecor
 
     for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
       const cell = cells.nth(cellIndex);
-      const label = ((await cell.getAttribute("data-title")) ??
+      const label = (
+        (await cell.getAttribute("data-title")) ??
         (await cell.getAttribute("headers")) ??
         (await cell.getAttribute("aria-label")) ??
         (await cell.getAttribute("class")) ??
-        "")
+        ""
+      )
         .replace(/[_-]+/g, " ")
         .toLowerCase();
       const value = await cell.textContent();
       const emailAnchor = cell.locator('a[href*="mailto:"]').first();
       const phoneAnchor = cell.locator('a[href*="tel:"]').first();
       const emailLink = await optionalAttribute(emailAnchor, "href");
-      const phoneLink = (await optionalText(phoneAnchor)) || (await optionalAttribute(phoneAnchor, "href"));
+      const phoneLink =
+        (await optionalText(phoneAnchor)) ||
+        (await optionalAttribute(phoneAnchor, "href"));
 
       if (isNameLabel(label)) mapped.name ??= value;
       else if (isTitleLabel(label)) mapped.title ??= value;
@@ -146,9 +155,9 @@ export async function extractGenericStaffRecords(page: Page): Promise<StaffRecor
   ].join(",");
 
   const cards = page.locator(selector);
-  for (let cardIndex = 0; cardIndex < await cards.count(); cardIndex += 1) {
+  for (let cardIndex = 0; cardIndex < (await cards.count()); cardIndex += 1) {
     const card = cards.nth(cardIndex);
-    if (await card.locator(selector).count() > 0) continue;
+    if ((await card.locator(selector).count()) > 0) continue;
 
     const emailLink = card.locator('a[href*="mailto:"]').first();
     const phoneLink = card.locator('a[href*="tel:"]').first();
@@ -172,14 +181,18 @@ export async function extractGenericStaffRecords(page: Page): Promise<StaffRecor
       "b",
       'a:not([href*="mailto:"]):not([href*="tel:"])',
     ]);
-    const title = await firstNonEmptyText(card, [
-      '[class*="title"]',
-      '[class*="position"]',
-      '[class*="role"]',
-      '[class*="job"]',
-      "p",
-      "div",
-    ], name);
+    const title = await firstNonEmptyText(
+      card,
+      [
+        '[class*="title"]',
+        '[class*="position"]',
+        '[class*="role"]',
+        '[class*="job"]',
+        "p",
+        "div",
+      ],
+      name,
+    );
 
     records.push({
       name,
@@ -189,25 +202,34 @@ export async function extractGenericStaffRecords(page: Page): Promise<StaffRecor
     });
   }
 
-  const bodyText = (await page.locator("body").textContent()) || (await page.locator("html").textContent()) || "";
+  const bodyText =
+    (await page.locator("body").textContent()) ||
+    (await page.locator("html").textContent()) ||
+    "";
   const lines = bodyText
     .split(/\r?\n+/)
     .map(cleanText)
     .filter(Boolean)
-    .filter((line) => !/^(staff directory|search|filter|print|download|menu|home)$/i.test(line));
+    .filter(
+      (line) =>
+        !/^(staff directory|search|filter|print|download|menu|home)$/i.test(
+          line,
+        ),
+    );
 
   for (let index = 0; index < lines.length; index += 1) {
     const window = lines.slice(index, index + 6);
-    const emailLine = window.find((line) => firstEmail(line));
-    const phoneLine = window.find((line) => firstPhone(line));
-    if (!emailLine && !phoneLine) continue;
-
     const nameIndex = window.findIndex(isLikelyPersonName);
     if (nameIndex === -1) continue;
 
-    const title = window
-      .slice(nameIndex + 1)
-      .find((line) => line !== emailLine && line !== phoneLine && isLikelyTitle(line));
+    const trailingLines = window.slice(nameIndex + 1);
+    const emailLine = trailingLines.find((line) => firstEmail(line));
+    const phoneLine = trailingLines.find((line) => firstPhone(line));
+    if (!emailLine && !phoneLine) continue;
+
+    const title = trailingLines.find(
+      (line) => line !== emailLine && line !== phoneLine && isLikelyTitle(line),
+    );
 
     if (!title) continue;
 
@@ -224,12 +246,15 @@ export async function extractGenericStaffRecords(page: Page): Promise<StaffRecor
 }
 
 async function optionalText(locator: Locator): Promise<string | null> {
-  if (await locator.count() === 0) return null;
+  if ((await locator.count()) === 0) return null;
   return locator.textContent();
 }
 
-async function optionalAttribute(locator: Locator, name: string): Promise<string | null> {
-  if (await locator.count() === 0) return null;
+async function optionalAttribute(
+  locator: Locator,
+  name: string,
+): Promise<string | null> {
+  if ((await locator.count()) === 0) return null;
   return locator.getAttribute(name);
 }
 
@@ -254,10 +279,14 @@ async function firstNonEmptyText(
   const exceptText = cleanText(except);
 
   for (const selector of selectors) {
-    const direct = cleanText(await optionalText(root.locator(`:scope > ${selector}`).first()));
+    const direct = cleanText(
+      await optionalText(root.locator(`:scope > ${selector}`).first()),
+    );
     if (direct && direct !== exceptText) return direct;
 
-    const nested = cleanText(await optionalText(root.locator(selector).first()));
+    const nested = cleanText(
+      await optionalText(root.locator(selector).first()),
+    );
     if (nested && nested !== exceptText) return nested;
   }
 
@@ -283,15 +312,23 @@ function isPhoneLabel(label: string): boolean {
 function isLikelyPersonName(line: string): boolean {
   if (line.length > 60 || /@|\d|:/.test(line)) return false;
   const words = line.split(/\s+/);
-  return words.length >= 2 && words.length <= 5 && words.every((word) => /^[A-Z][A-Za-z'.-]+,?$/.test(word));
+  return (
+    words.length >= 2 &&
+    words.length <= 6 &&
+    words.every((word) => isNameWord(word) || isNameParticle(word))
+  );
 }
 
 function isLikelyTitle(line: string): boolean {
   if (line.length > 100 || /@/.test(line)) return false;
-  return /director|coach|coordinator|assistant|associate|athletic|athletics|administrator|trainer|nutrition|counselor|psychologist|operations|communications|compliance|president|staff/i.test(line);
+  return /director|coach|coordinator|assistant|associate|athletic|athletics|administrator|trainer|nutrition|counselor|psychologist|operations|communications|compliance|president|staff/i.test(
+    line,
+  );
 }
 
-function preferRicherRecordsByNameAndTitle(records: StaffRecord[]): StaffRecord[] {
+function preferRicherRecordsByNameAndTitle(
+  records: StaffRecord[],
+): StaffRecord[] {
   const byIdentity = new Map<string, StaffRecord>();
 
   for (const record of records) {
@@ -313,16 +350,21 @@ function preferRicherRecordsByNameAndTitle(records: StaffRecord[]): StaffRecord[
   return [...byIdentity.values()];
 }
 
-export async function extractSidearmStaffRows(page: Page): Promise<RawStaffRecord[]> {
+export async function extractSidearmStaffRows(
+  page: Page,
+): Promise<RawStaffRecord[]> {
   return page.evaluate<RawStaffRecord[]>(() => {
     const rows: RawStaffRecord[] = [];
 
-    for (const element of document.querySelectorAll("tr.sidearm-staff-member")) {
+    for (const element of document.querySelectorAll(
+      "tr.sidearm-staff-member",
+    )) {
       const nameCell = element.querySelector('[headers*="col-fullname"], th');
       const titleCell = element.querySelector('[headers*="col-staff_title"]');
       const phoneCell = element.querySelector('[headers*="col-staff_phone"]');
       const emailCell = element.querySelector('[headers*="col-staff_email"]');
-      const emailLink = emailCell?.querySelector<HTMLAnchorElement>('a[href*="mailto:"]');
+      const emailLink =
+        emailCell?.querySelector<HTMLAnchorElement>('a[href*="mailto:"]');
 
       rows.push({
         name: nameCell?.textContent,
@@ -334,24 +376,41 @@ export async function extractSidearmStaffRows(page: Page): Promise<RawStaffRecor
 
     if (rows.length > 0) return rows;
 
-    for (const element of document.querySelectorAll<HTMLAnchorElement>('a[href*="staff-directory"]')) {
+    for (const element of document.querySelectorAll<HTMLAnchorElement>(
+      'a[href*="staff-directory"]',
+    )) {
       const aria = element.getAttribute("aria-label") ?? "";
-      const ariaParts = aria.split(":").map((part) => part.trim()).filter(Boolean);
+      const ariaParts = aria
+        .split(":")
+        .map((part) => part.trim())
+        .filter(Boolean);
       let cursor = element.nextSibling;
       let email: string | null | undefined;
       let phone: string | null | undefined;
       let text = "";
 
       while (cursor) {
-        if (cursor instanceof HTMLAnchorElement && cursor.href.includes("staff-directory")) break;
+        if (
+          cursor instanceof HTMLAnchorElement &&
+          cursor.href.includes("staff-directory")
+        )
+          break;
 
         text += ` ${cursor.textContent ?? ""}`;
 
-        if (!email && cursor instanceof HTMLAnchorElement && cursor.href.includes("mailto:")) {
+        if (
+          !email &&
+          cursor instanceof HTMLAnchorElement &&
+          cursor.href.includes("mailto:")
+        ) {
           email = cursor.href || cursor.textContent;
         }
 
-        if (!phone && cursor instanceof HTMLAnchorElement && cursor.href.includes("tel:")) {
+        if (
+          !phone &&
+          cursor instanceof HTMLAnchorElement &&
+          cursor.href.includes("tel:")
+        ) {
           phone = cursor.textContent || cursor.href;
         }
 
@@ -370,6 +429,39 @@ export async function extractSidearmStaffRows(page: Page): Promise<RawStaffRecor
   });
 }
 
-function stripLabels(value: string): string {
-  return value.replace(/^(?:name|title|phone|e-?mail|email)\s*:?\s*/i, "");
+function stripFieldLabel(value: string): string {
+  return value
+    .replace(
+      /^(?:name|full.?name|title|phone|e-?mail|email)\s*(?:[:|\-]\s*|\u2013\s*|\u2014\s*)/i,
+      "",
+    )
+    .replace(/^(?:name|full.?name|title|phone|e-?mail|email)$/i, "");
+}
+
+function stripContactLabel(value: string): string {
+  return value
+    .replace(
+      /^(?:phone|tel|office|e-?mail|email)\s*(?:[:|\-]\s*|\u2013\s*|\u2014\s*)/i,
+      "",
+    )
+    .replace(/^(?:phone|tel|office|e-?mail|email)$/i, "");
+}
+
+function phoneDedupKey(value?: string): string | undefined {
+  if (!value) return undefined;
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return undefined;
+  return digits.length === 11 && digits.startsWith("1")
+    ? digits.slice(1)
+    : digits;
+}
+
+function isNameParticle(word: string): boolean {
+  return /^(?:da|de|del|della|der|di|dos|du|la|le|van|von|bin|al)$/i.test(
+    word.replace(/,$/, ""),
+  );
+}
+
+function isNameWord(word: string): boolean {
+  return /^[\p{Lu}][\p{L}'’. -]*,?$/u.test(word) && /[\p{L}]/u.test(word);
 }

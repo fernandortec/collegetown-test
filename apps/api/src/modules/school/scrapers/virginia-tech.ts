@@ -28,10 +28,52 @@ export async function getStaffVirginiaTechCurrent(page: Page): Promise<StaffReco
     'a.staff-directory-table-member-position__link--name',
     (links) =>
       links.map((link) => {
-        let cursor = link.nextSibling;
+        const container =
+          link.closest(
+            [
+              "tr",
+              "li",
+              "article",
+              "section",
+              '[class*="card"]',
+              '[class*="member"]',
+              '[class*="staff"]',
+              '[class*="person"]',
+            ].join(","),
+          ) ?? link.parentElement;
+
+        const titleFromContainer =
+          container?.querySelector(
+            [
+              ".staff-directory-table-member-position__position",
+              '[class*="position"]',
+              '[class*="title"]',
+              '[class*="role"]',
+              '[class*="job"]',
+              "p",
+            ].join(","),
+          )?.textContent ?? undefined;
+        const emailFromContainer =
+          container?.querySelector<HTMLAnchorElement>('a[href^="mailto:"]')?.href ??
+          undefined;
+        const phoneLinkFromContainer =
+          container?.querySelector<HTMLAnchorElement>('a[href^="tel:"]');
+        const phoneFromContainer =
+          phoneLinkFromContainer?.textContent || phoneLinkFromContainer?.href || undefined;
+
+        if (titleFromContainer || emailFromContainer || phoneFromContainer) {
+          return {
+            name: link.textContent,
+            title: titleFromContainer,
+            email: emailFromContainer,
+            phone: phoneFromContainer,
+          };
+        }
+
         let title: string | null | undefined;
         let email: string | null | undefined;
         let phone: string | null | undefined;
+        let cursor = link.nextSibling;
 
         while (cursor) {
           if (

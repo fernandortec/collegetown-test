@@ -12,7 +12,7 @@ export function getStaffWittenbergSnapshot(page: Page): Promise<StaffRecord[]> {
 }
 
 async function getStaffFromDataTitleRows(page: Page): Promise<StaffRecord[]> {
-  const records = await page.$$eval('tr:has(td[data-title="Name"])', (rows) =>
+  const records = await page.$$eval('tr:has(td[data-title="Name"], td[data-title="name"])', (rows) =>
     rows.map((row) => {
       const nameCell = row.querySelector('td[data-title="Name"], td[data-title="name"]');
       const titleCell = row.querySelector('td[data-title="Title"], td[data-title="title"]');
@@ -35,6 +35,23 @@ async function getStaffFromDataTitleRows(page: Page): Promise<StaffRecord[]> {
     'a[href*="/information/directory/bios/"]',
     (links) =>
       links.map((link) => {
+        const row = link.closest("tr");
+        if (row) {
+          const titleCell = row.querySelector('td[data-title="Title"], td[data-title="title"]');
+          const phoneCell = row.querySelector('td[data-title="Phone"], td[data-title="phone"]');
+          const emailCell = row.querySelector(
+            'td[data-title="E-mail"], td[data-title="e-mail"], td[data-title="Email"], td[data-title="email"]',
+          );
+          const emailLink = emailCell?.querySelector<HTMLAnchorElement>('a[href*="mailto:"]');
+
+          return {
+            name: link.textContent,
+            title: titleCell?.textContent,
+            phone: phoneCell?.textContent,
+            email: emailLink?.href ?? emailCell?.textContent,
+          };
+        }
+
         let cursor = link.nextSibling;
         let title: string | null | undefined;
         let email: string | null | undefined;
