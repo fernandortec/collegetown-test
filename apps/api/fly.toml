@@ -7,6 +7,10 @@ app = 'collegetown-test'
 primary_region = 'gru'
 
 [build]
+  dockerfile = "Dockerfile"
+
+[processes]
+  app = "npm run start"
 
 [http_service]
   internal_port = 8080

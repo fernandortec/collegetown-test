@@ -5,4 +5,5 @@ import { app } from "./app";
 serve({
   fetch: app.fetch,
   port: env.PORT,
+  hostname: "0.0.0.0",
 });

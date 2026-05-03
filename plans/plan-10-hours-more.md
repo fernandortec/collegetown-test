@@ -39,3 +39,22 @@
 - [ ] Add admin controls for school URLs, snapshots, expected count ranges, and scrape health.
 - [ ] Add audit trail for every generated report and email.
 - [ ] Do final accessibility, mobile, and visual polish pass before launch.
+
+## Tech Stack & Tools Used
+
+### Frontend
+- **Framework:** React 19 + Vite
+- **Styling:** Tailwind CSS v4
+- **State/Routing:** React Query, React Router
+- **Validation:** Zod
+
+### Backend (API)
+- **Framework:** Hono (Node Server)
+- **Scraping:** Playwright
+- **AI/Extraction:** Vercel AI SDK (`@ai-sdk/google`)
+- **Validation:** Zod
+
+### Infrastructure & Deployment
+- **Frontend Hosting:** Vercel
+- **Backend Hosting:** Fly.io (Docker, handles Playwright size + scale-to-zero)
+- **Containerization:** Docker
