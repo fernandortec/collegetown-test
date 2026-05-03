@@ -226,6 +226,7 @@ function PagePreview({ label, url }: { label: string; url: string }) {
           className="h-full w-full bg-white"
           onLoad={() => setLoaded(true)}
           referrerPolicy="no-referrer"
+          sandbox="allow-same-origin allow-scripts"
           src={url}
           title={`${label} preview`}
         />
