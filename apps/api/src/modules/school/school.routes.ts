@@ -31,6 +31,8 @@ export function registerSchoolRoutes(app: Hono): void {
   });
 
   app.get("/api/schools/:schoolId/diff", async (c) => {
+    c.header("Cache-Control", "no-store, max-age=0");
+
     const schoolId = c.req.param("schoolId");
     const school = services.getSchoolById(schoolId);
 

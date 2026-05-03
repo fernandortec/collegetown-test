@@ -27,7 +27,7 @@ export function SchoolPanel({ school }: { school: School }) {
           </span>
         </div>
 
-        <h2 className="mt-8 text-3xl font-semibold tracking-[-0.04em] text-[#14312f] md:text-4xl">
+        <h2 className="mt-8 text-3xl font-semibold tracking-tight text-[#14312f] md:text-4xl">
           {school.shortName}
         </h2>
         <p className="mt-3 text-sm leading text-[#526d68]">
@@ -39,7 +39,7 @@ export function SchoolPanel({ school }: { school: School }) {
       <div className="mt-8 space-y-4">
         <div className="rounded-2xl border border-white/70 bg-white/50 p-4">
           <p
-            className="text-xs font-bold uppercase tracking-[0.12em]"
+            className="text-xs font-bold uppercase tracking-wide"
             style={{ color: colors.primary }}
           >
             Default snapshot

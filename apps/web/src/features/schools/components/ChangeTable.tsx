@@ -21,11 +21,11 @@ export function ChangeTable({
         >
           <div className="border-b border-[#d8e8e4] bg-white/60 px-5 py-5">
             <div className="flex min-w-0 items-center justify-between gap-4">
-              <h4 className="min-w-0 truncate text-xl font-semibold tracking-[-0.03em] text-[#14312f]">
+              <h4 className="min-w-0 truncate text-xl font-semibold tracking-tight text-[#14312f]">
                 {change.staffIdentity}
               </h4>
               <span
-                className={`shrink-0 rounded-full border px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.14em] ${getChangeBadgeClasses(change.type)}`}
+                className={`shrink-0 rounded-full border px-3 py-1 text-[0.68rem] font-black uppercase tracking-wide ${getChangeBadgeClasses(change.type)}`}
               >
                 {formatChangeType(change.type)}
               </span>
