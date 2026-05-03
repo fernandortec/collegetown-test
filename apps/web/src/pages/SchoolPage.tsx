@@ -4,7 +4,7 @@ import {
   useSchoolDiffQuery,
   useSchoolsQuery,
 } from "../features/schools/queries";
-import type { DiffReport, StaffRecord } from "../features/schools/schemas";
+import type { Change, DiffReport, StaffRecord } from "../features/schools/schemas";
 import { getDefaultSnapshot, withAlpha } from "../features/schools/utils";
 import { CatalogErrorPage } from "../shared/components/CatalogErrorPage";
 import { CatalogLoadingPage } from "../shared/components/CatalogLoadingPage";
@@ -116,7 +116,8 @@ function ComparisonReport({
           Live extraction running.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526d68]">
-          Backend renders both sources with Playwright, cleans page text, detect differs
+          Backend renders both sources with Playwright, cleans …cleans page
+          text, and detects differences..
         </p>
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#c8e6e0]">
           <div className="h-full animate-load-progress rounded-full bg-[#2f756c]" />
@@ -143,109 +144,168 @@ function ComparisonReport({
 
 function ReportSuccess({ report }: { report: DiffReport }) {
   return (
-    <div>
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-bold uppercase text-[#2f756c]">
-            Staff extracted
+    <div className="min-w-0">
+      <div className="flex min-w-0 flex-col gap-5 rounded-2xl border border-white/70 bg-white/45 p-5 shadow-sm backdrop-blur md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 md:max-w-2xl">
+          <p className="text-base font-bold uppercase text-[#2f756c]">
+            Staff intelligence report
           </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
-            Structured staff records returned.
+          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em] md:text-5xl">
+            Top staff changes ranked by role impact.
           </h2>
-          <p className="mt-2 text-sm text-[#526d68]">
+          <p className="mt-3 text-base text-[#526d68]">
             Generated at {new Date(report.generatedAt).toLocaleString()}.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2 md:min-w-[24rem]">
           <MetricCard label="Current" value={report.stats.currentCount} />
           <MetricCard label="Archived" value={report.stats.archivedCount} />
+          <MetricCard label="Changes" value={report.stats.totalChanges} />
         </div>
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <StaffList
-          label="Current staff"
-          records={report.currentStaff}
-          sourceUrl={report.sources.currentUrl}
-        />
-        <StaffList
-          label="Archived staff"
-          records={report.archivedStaff}
-          sourceUrl={report.sources.archivedUrl}
-        />
+      <div className="mt-4 grid gap-2 sm:grid-cols-4">
+        <SmallMetric label="Added" value={report.stats.addedCount} />
+        <SmallMetric label="Removed" value={report.stats.removedCount} />
+        <SmallMetric label="Title" value={report.stats.titleChangedCount} />
+        <SmallMetric label="Contact" value={report.stats.contactChangedCount} />
       </div>
+
+      <section className="mt-6 min-w-0">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">Top changes</p>
+            <h3 className="text-lg font-semibold tracking-[-0.03em]">
+              Most meaningful moves first.
+            </h3>
+          </div>
+          <p className="text-xs font-semibold text-[#526d68]">
+            Showing {report.topChanges.length} of {report.changes.length}
+          </p>
+        </div>
+        <ChangeTable changes={report.topChanges} />
+      </section>
+
+      <details className="mt-4 rounded-xl border border-white/70 bg-white/55 p-3 shadow-sm backdrop-blur">
+        <summary className="cursor-pointer text-xs font-bold uppercase text-[#2f756c]">
+          All detected changes ({report.changes.length})
+        </summary>
+        <ChangeTable changes={report.changes} dense />
+      </details>
     </div>
   );
 }
 
+function ChangeTable({ changes, dense = false }: { changes: Change[]; dense?: boolean }) {
+  return (
+    <div className="mt-3 space-y-2">
+      {changes.map((change) => (
+        <article
+          key={`${change.type}-${change.staffIdentity}`}
+          className="overflow-hidden rounded-xl border border-[#d8e8e4] bg-white/70 shadow-sm shadow-[#9bb8b2]/20"
+        >
+          <div className="flex flex-col gap-1.5 border-b border-[#e3eeeb] bg-[#f1f8f6] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-[#2f756c]/15 bg-[#dff4ef] px-2 py-0.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#2f756c]">
+                  {formatChangeType(change.type)}
+                </span>
+                <span className="font-mono text-[0.68rem] font-semibold text-[#526d68]">
+                  score {change.importanceScore}
+                </span>
+              </div>
+              <h4 className="mt-1 truncate text-sm font-semibold text-[#14312f]">
+                {change.staffIdentity}
+              </h4>
+            </div>
+            {!dense ? (
+              <p className="max-w-xl text-[0.68rem] leading-4 text-[#526d68]">
+                {change.explanation}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="grid min-w-0 gap-px bg-[#d8e8e4]">
+            <DiffRecord
+              label="Before"
+              marker="-"
+              record={change.before}
+              emptyText="Not listed before"
+              tone="removed"
+            />
+            <DiffRecord
+              label="After"
+              marker="+"
+              record={change.after}
+              emptyText="Not listed after"
+              tone="added"
+            />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function DiffRecord({
+  label,
+  marker,
+  record,
+  emptyText,
+  tone,
+}: {
+  label: string;
+  marker: "+" | "-";
+  record?: StaffRecord;
+  emptyText: string;
+  tone: "added" | "removed";
+}) {
+  const color = tone === "added" ? "text-[#2f756c]" : "text-[#8a3b2f]";
+  const bg = tone === "added" ? "bg-[#e8f6f2]" : "bg-[#fff4f1]";
+  const lines = record
+    ? [record.name, record.title, [record.email, record.phone].filter(Boolean).join(" · ")].filter(Boolean)
+    : [emptyText];
+
+  return (
+    <div className={`${bg} min-w-0 p-2.5 font-mono text-[0.68rem] leading-4`}>
+      <p className="mb-1 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[#526d68]">
+        {label}
+      </p>
+      {lines.map((line) => (
+        <p key={line} className={`${color} flex min-w-0 gap-2 whitespace-pre-wrap break-words`}>
+          <span className="select-none text-[#8aa09c]">{marker}</span>
+          <span>{line}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function formatChangeType(type: Change["type"]): string {
+  if (type === "title_changed") return "Title changed";
+  if (type === "contact_changed") return "Contact changed";
+  return type[0].toUpperCase() + type.slice(1);
+}
+
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="min-w-28 rounded-2xl border border-white/70 bg-white/55 p-4 text-center shadow-sm backdrop-blur">
+    <div className="min-w-0 rounded-xl border border-white/70 bg-white/55 p-4 text-center shadow-sm backdrop-blur">
       <p className="text-3xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#2f756c]">
+      <p className="mt-0.5 truncate text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">
         {label}
       </p>
     </div>
   );
 }
 
-function StaffList({
-  label,
-  records,
-  sourceUrl,
-}: {
-  label: string;
-  records: StaffRecord[];
-  sourceUrl: string;
-}) {
+function SmallMetric({ label, value }: { label: string; value: number }) {
   return (
-    <article className="rounded-3xl border border-white/70 bg-white/55 p-5 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-bold uppercase  text-[#2f756c]">{label}</p>
-          <p className="mt-1 text-sm text-[#526d68]">
-            {records.length} records
-          </p>
-        </div>
-        <Link
-          className="text-sm font-bold text-[#14312f] underline decoration-[#2f756c] decoration-2 underline-offset-4 hover:text-[#2f756c]"
-          to={sourceUrl}
-          rel="noreferrer"
-          target="_blank"
-        >
-          Source
-        </Link>
-      </div>
-
-      <div className="mt-5 max-h-[34rem] space-y-3 overflow-auto pr-2">
-        {records.map((record, index) => (
-          <div
-            key={`${record.name}-${index}`}
-            className="rounded-2xl border border-white/70 bg-white/55 p-4"
-          >
-            <p className="font-semibold text-[#14312f]">{record.name}</p>
-            <p className="mt-1 text-sm text-[#526d68]">{record.title}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#526d68]">
-              {record.email ? (
-                <span className="rounded-full bg-[#dff4ef] px-3 py-1">
-                  {record.email}
-                </span>
-              ) : null}
-              {record.phone ? (
-                <span className="rounded-full bg-[#dff4ef] px-3 py-1">
-                  {record.phone}
-                </span>
-              ) : null}
-              {!record.email && !record.phone ? (
-                <span className="rounded-full bg-[#dff4ef] px-3 py-1">
-                  No contact listed
-                </span>
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
-    </article>
+    <div className="flex min-w-0 items-center justify-between rounded-xl border border-white/70 bg-white/45 px-3 py-2 shadow-sm backdrop-blur">
+      <p className="truncate text-[0.68rem] font-black uppercase tracking-widest text-[#2f756c]">
+        {label}
+      </p>
+      <p className="text-lg font-semibold text-[#14312f]">{value}</p>
+    </div>
   );
 }
 

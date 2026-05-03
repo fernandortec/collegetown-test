@@ -1,4 +1,5 @@
 export type SchoolId = "georgia" | "virginia-tech" | "wittenberg";
+import type { Page } from "playwright";
 
 export type SchoolSnapshot = {
   id: string;
@@ -22,7 +23,17 @@ export type StaffRecord = {
   email?: string;
 };
 
-import type { Page } from "playwright";
+export type ChangeType = "added" | "removed" | "title_changed" | "contact_changed";
+
+export type Change = {
+  type: ChangeType;
+  staffIdentity: string;
+  before?: StaffRecord;
+  after?: StaffRecord;
+  importanceScore: number;
+  explanation: string;
+};
+
 
 export type StaffScraperConfig = {
   readySelector: string;
@@ -50,6 +61,11 @@ export type PublicSchool = Omit<School, "scrapers">;
 export type DiffReportStats = {
   currentCount: number;
   archivedCount: number;
+  addedCount: number;
+  removedCount: number;
+  titleChangedCount: number;
+  contactChangedCount: number;
+  totalChanges: number;
 };
 
 export type DiffReport = {
@@ -63,6 +79,8 @@ export type DiffReport = {
   generatedAt: string;
   currentStaff: StaffRecord[];
   archivedStaff: StaffRecord[];
+  changes: Change[];
+  topChanges: Change[];
   stats: DiffReportStats;
 };
 

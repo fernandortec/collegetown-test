@@ -32,6 +32,15 @@ export const staffRecordSchema = z.object({
   email: z.string().optional(),
 });
 
+export const changeSchema = z.object({
+  type: z.enum(["added", "removed", "title_changed", "contact_changed"]),
+  staffIdentity: z.string(),
+  before: staffRecordSchema.optional(),
+  after: staffRecordSchema.optional(),
+  importanceScore: z.number(),
+  explanation: z.string(),
+});
+
 export const diffReportSchema = z.object({
   school: schoolSchema,
   sources: z.object({
@@ -43,9 +52,16 @@ export const diffReportSchema = z.object({
   generatedAt: z.string(),
   currentStaff: z.array(staffRecordSchema),
   archivedStaff: z.array(staffRecordSchema),
+  changes: z.array(changeSchema),
+  topChanges: z.array(changeSchema),
   stats: z.object({
     currentCount: z.number(),
     archivedCount: z.number(),
+    addedCount: z.number(),
+    removedCount: z.number(),
+    titleChangedCount: z.number(),
+    contactChangedCount: z.number(),
+    totalChanges: z.number(),
   }),
 });
 
@@ -56,4 +72,5 @@ export const schoolsResponseSchema = z.object({
 export type School = z.infer<typeof schoolSchema>;
 export type SchoolSnapshot = z.infer<typeof schoolSnapshotSchema>;
 export type StaffRecord = z.infer<typeof staffRecordSchema>;
+export type Change = z.infer<typeof changeSchema>;
 export type DiffReport = z.infer<typeof diffReportSchema>;

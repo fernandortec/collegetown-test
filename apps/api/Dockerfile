@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.56.1-noble AS build
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM mcr.microsoft.com/playwright:v1.56.1-noble AS runtime
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production

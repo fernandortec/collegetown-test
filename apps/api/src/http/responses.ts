@@ -1,13 +1,6 @@
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-
-export type ErrorResponse = {
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-};
+import { ErrorResponse } from "../@types/types";
 
 export function jsonError(
   c: Context,

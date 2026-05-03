@@ -160,19 +160,19 @@ Turn raw staff lists into a meaningful intelligence report. Compare current vs a
 
 ### Acceptance criteria
 
-- [ ] Diff detects added staff.
-- [ ] Diff detects removed staff.
-- [ ] Diff detects title changes.
-- [ ] Diff detects phone/email contact changes.
-- [ ] Exact normalized name matching handles case, punctuation, and spacing.
-- [ ] Conservative fuzzy matching avoids obvious false merges.
-- [ ] Head coaches, directors, coordinators, and senior staff rank above lower-priority changes.
-- [ ] Contact-only changes rank lower unless attached to senior staff.
-- [ ] API returns all changes and top ranked changes.
-- [ ] Top ranked list contains 5–10 meaningful changes when enough changes exist.
-- [ ] UI shows neutral diff cards with change type, name, before box, after box, and explanation.
-- [ ] UI includes expandable all-detected-changes section.
-- [ ] UI displays summary stats from the report.
+- [x] Diff detects added staff.
+- [x] Diff detects removed staff.
+- [x] Diff detects title changes.
+- [x] Diff detects phone/email contact changes.
+- [x] Exact normalized name matching handles case, punctuation, and spacing.
+- [x] Conservative fuzzy matching avoids obvious false merges.
+- [x] Head coaches, directors, coordinators, and senior staff rank above lower-priority changes.
+- [x] Contact-only changes rank lower unless attached to senior staff.
+- [x] API returns all changes and top ranked changes.
+- [x] Top ranked list contains 5–10 meaningful changes when enough changes exist.
+- [x] UI shows neutral diff cards with change type, name, before box, after box, and explanation.
+- [x] UI includes expandable all-detected-changes section.
+- [x] UI displays summary stats from the report.
 
 ---
 

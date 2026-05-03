@@ -44,14 +44,21 @@ export function registerSchoolRoutes(app: Hono): void {
 
     try {
       const report = await withStaffExtractionBrowser(async (browser) => {
-        return await services.buildDiffReport(school, async (source, url) => {
-          return await extractStaffRecordsFromPage({
-            browser,
-            school,
-            source,
-            url,
-          });
-        });
+        const diff = await services.buildDiffReport(
+          school,
+          async (source, url) => {
+            const staffRecords = await extractStaffRecordsFromPage({
+              browser,
+              school,
+              source,
+              url,
+            });
+
+            return staffRecords;
+          },
+        );
+
+        return diff;
       });
 
       return c.json(report);
@@ -67,7 +74,9 @@ export function registerSchoolRoutes(app: Hono): void {
       return jsonError(c, 500, {
         code: "DIFF_REPORT_ERROR",
         message:
-          error instanceof Error ? error.message : "Failed to build diff report.",
+          error instanceof Error
+            ? error.message
+            : "Failed to build diff report.",
       });
     }
   });

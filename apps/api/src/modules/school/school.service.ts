@@ -1,5 +1,6 @@
 import { schools } from "./school.catalog";
 import type {
+  ChangeType,
   DiffReport,
   PublicSchool,
   School,
@@ -7,6 +8,7 @@ import type {
   StaffRecord,
 } from "./school.types";
 import type { ExtractionSource } from "./school.extraction";
+import { buildStaffDiff } from "./school.diff";
 
 export function listSchools(): School[] {
   return schools;
@@ -41,6 +43,9 @@ export async function buildDiffReport(
 
   const currentStaff = await extractor("current", school.currentUrl);
   const archivedStaff = await extractor("archive", snapshot.url);
+  const { changes, topChanges } = buildStaffDiff(archivedStaff, currentStaff);
+  const countChanges = (type: ChangeType) =>
+    changes.filter((change) => change.type === type).length;
 
   return {
     school: toPublicSchool(school),
@@ -53,9 +58,16 @@ export async function buildDiffReport(
     generatedAt: new Date().toISOString(),
     currentStaff,
     archivedStaff,
+    changes,
+    topChanges,
     stats: {
       currentCount: currentStaff.length,
       archivedCount: archivedStaff.length,
+      addedCount: countChanges("added"),
+      removedCount: countChanges("removed"),
+      titleChangedCount: countChanges("title_changed"),
+      contactChangedCount: countChanges("contact_changed"),
+      totalChanges: changes.length,
     },
   };
 }
