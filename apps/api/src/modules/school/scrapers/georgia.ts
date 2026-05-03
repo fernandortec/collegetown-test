@@ -4,7 +4,7 @@ import { extractSidearmStaffRows, normalizeStaffRecords } from "./scraper-utils"
 
 export function getStaffGeorgiaCurrent(html: string): StaffRecord[] {
   const $ = cheerio.load(html);
-  const records: any[] = [];
+  const records: StaffRecord[] = [];
 
   $(".s-person-card").each((_, card) => {
     const name = $(card).find("h4").text();

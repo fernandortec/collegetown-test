@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import type { StaffRecord } from "../school.types";
-import { normalizeStaffRecords } from "./scraper-utils";
+import { normalizeStaffRecords, RawStaffRecord } from "./scraper-utils";
 
 export function getStaffWittenbergCurrent(html: string): StaffRecord[] {
   return getStaffFromDataTitleRows(html);
@@ -12,13 +12,21 @@ export function getStaffWittenbergSnapshot(html: string): StaffRecord[] {
 
 function getStaffFromDataTitleRows(html: string): StaffRecord[] {
   const $ = cheerio.load(html);
-  const records: any[] = [];
+  const records: RawStaffRecord[] = [];
 
   $('tr:has(td[data-title="Name"])').each((_, row) => {
-    const nameCell = $(row).find('td[data-title="Name"], td[data-title="name"]');
-    const titleCell = $(row).find('td[data-title="Title"], td[data-title="title"]');
-    const phoneCell = $(row).find('td[data-title="Phone"], td[data-title="phone"]');
-    const emailCell = $(row).find('td[data-title="E-mail"], td[data-title="e-mail"], td[data-title="Email"], td[data-title="email"]');
+    const nameCell = $(row).find(
+      'td[data-title="Name"], td[data-title="name"]',
+    );
+    const titleCell = $(row).find(
+      'td[data-title="Title"], td[data-title="title"]',
+    );
+    const phoneCell = $(row).find(
+      'td[data-title="Phone"], td[data-title="phone"]',
+    );
+    const emailCell = $(row).find(
+      'td[data-title="E-mail"], td[data-title="e-mail"], td[data-title="Email"], td[data-title="email"]',
+    );
     const emailLink = emailCell.find('a[href*="mailto:"]');
 
     records.push({
@@ -29,7 +37,7 @@ function getStaffFromDataTitleRows(html: string): StaffRecord[] {
     });
   });
 
-  const flattenedRecords: any[] = [];
+  const flattenedRecords: RawStaffRecord[] = [];
 
   $('a[href*="/information/directory/bios/"]').each((_, link) => {
     let cursor = (link as any).nextSibling;
@@ -39,7 +47,8 @@ function getStaffFromDataTitleRows(html: string): StaffRecord[] {
 
     while (cursor) {
       if (
-        cursor.tagName && cursor.tagName.toLowerCase() === "a" &&
+        cursor.tagName &&
+        cursor.tagName.toLowerCase() === "a" &&
         $(cursor).attr("href")?.includes("/information/directory/bios/")
       ) {
         break;
@@ -47,9 +56,15 @@ function getStaffFromDataTitleRows(html: string): StaffRecord[] {
 
       if (!title && cursor.tagName && cursor.tagName.toLowerCase() === "div") {
         title = $(cursor).text();
-      } else if (!email && cursor.tagName && cursor.tagName.toLowerCase() === "a" && $(cursor).attr("href")?.includes("mailto:")) {
+      } else if (
+        !email &&
+        cursor.tagName &&
+        cursor.tagName.toLowerCase() === "a" &&
+        $(cursor).attr("href")?.includes("mailto:")
+      ) {
         email = $(cursor).attr("href") ?? $(cursor).text();
-      } else if (cursor.nodeType === 3) { // TEXT_NODE
+      } else if (cursor.nodeType === 3) {
+        // TEXT_NODE
         phoneText += ` ${cursor.nodeValue ?? ""}`;
       }
 

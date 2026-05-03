@@ -1,9 +1,5 @@
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import {
-  DesignMockRoute,
-  DesignMocksIndexPage,
-} from "../pages/DesignMockPage";
 import { HomePage } from "../pages/HomePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { SchoolRoute } from "../pages/SchoolPage";
@@ -14,8 +10,6 @@ export function AppRoutes() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/mocks" element={<DesignMocksIndexPage />} />
-        <Route path="/mocks/:mockId" element={<DesignMockRoute />} />
         <Route path="/schools/:schoolId" element={<SchoolRoute />} />
         <Route path="*" element={<UnknownRoute />} />
       </Routes>

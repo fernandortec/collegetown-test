@@ -4,6 +4,7 @@ import path from "node:path";
 
 import type { StaffRecord } from "../school.types";
 import { getStaffGeorgiaCurrent, getStaffGeorgiaSnapshot } from "./georgia";
+import { extractGenericStaffRecords } from "./scraper-utils";
 import { getStaffVirginiaTechCurrent, getStaffVirginiaTechSnapshot } from "./virginia-tech";
 import { getStaffWittenbergCurrent, getStaffWittenbergSnapshot } from "./wittenberg";
 
@@ -241,6 +242,70 @@ async function main(): Promise<void> {
     assert.deepEqual(actual, testCase.expected, testCase.name);
     console.log(`✓ ${testCase.name}`);
   }
+
+  assert.deepEqual(
+    extractGenericStaffRecords(`
+      <table>
+        <tr><th>Name</th><th>Title</th><th>Email</th><th>Phone</th></tr>
+        <tr>
+          <td data-title="Name">Alex Stone</td>
+          <td data-title="Title">Associate Athletics Director</td>
+          <td data-title="Email"><a href="mailto:astone@example.edu">Email</a></td>
+          <td data-title="Phone"><a href="tel:555-123-4567">555-123-4567</a></td>
+        </tr>
+      </table>
+    `),
+    [
+      {
+        name: "Alex Stone",
+        title: "Associate Athletics Director",
+        email: "astone@example.edu",
+        phone: "555-123-4567",
+      },
+    ],
+    "generic fallback table layout",
+  );
+  console.log("✓ generic fallback table layout");
+
+  assert.deepEqual(
+    extractGenericStaffRecords(`
+      <section class="profile-card">
+        <h3>Jordan Hale</h3>
+        <p class="position">Director of Athletics Communications</p>
+        <a href="mailto:jhale@example.edu">jhale@example.edu</a>
+      </section>
+    `),
+    [
+      {
+        name: "Jordan Hale",
+        title: "Director of Athletics Communications",
+        email: "jhale@example.edu",
+      },
+    ],
+    "generic fallback card layout",
+  );
+  console.log("✓ generic fallback card layout");
+
+  assert.deepEqual(
+    extractGenericStaffRecords(`
+      <main>
+        Taylor Reed
+        Assistant Coach
+        treed@example.edu
+        555-987-6543
+      </main>
+    `),
+    [
+      {
+        name: "Taylor Reed",
+        title: "Assistant Coach",
+        email: "treed@example.edu",
+        phone: "555-987-6543",
+      },
+    ],
+    "generic fallback text layout",
+  );
+  console.log("✓ generic fallback text layout");
 }
 
 main().catch((error: unknown) => {

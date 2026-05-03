@@ -1,6 +1,7 @@
 import { chromium, errors as playwrightErrors, type Browser, type Page } from "playwright";
 import { z } from "zod";
 
+import { extractGenericStaffRecords } from "./scrapers/scraper-utils";
 import type { School, SchoolId, StaffRecord } from "./school.types";
 
 export type ExtractionSource = "current" | "archive";
@@ -82,12 +83,18 @@ export async function extractStaffRecordsFromPage({
 
     await cleanupPageChrome(page);
 
-    await page.waitForSelector(config.readySelector, {
-      timeout: pageTimeoutMs,
-    });
+    await page
+      .waitForSelector(config.readySelector, {
+        timeout: pageTimeoutMs,
+      })
+      .catch(() => undefined);
 
     const html = await page.content();
-    const scrapedRecords = await config.scrape(html);
+    const schoolSpecificRecords = await config.scrape(html);
+    const scrapedRecords =
+      schoolSpecificRecords.length > 0
+        ? schoolSpecificRecords
+        : extractGenericStaffRecords(html);
 
     const records = sanitizeStaffRecords(scrapedRecords, {
       schoolId: school.id,

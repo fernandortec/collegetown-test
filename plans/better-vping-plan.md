@@ -137,14 +137,16 @@ Expand scraping from the first tracer bullet to all three schools. Add school-sp
 
 ### Acceptance criteria
 
-- [ ] Georgia current and archived pages return non-empty structured staff lists.
-- [ ] Virginia Tech current and archived pages return non-empty structured staff lists.
-- [ ] Wittenberg current and archived pages return non-empty structured staff lists.
-- [ ] School-specific parsing runs before generic fallback.
-- [ ] Generic fallback can recover staff-like records from common table/card/text layouts.
-- [ ] Empty results still fail loudly instead of returning successful empty reports.
-- [ ] API response shape remains unchanged from Phase 3.
-- [ ] Frontend can show raw scraped counts for each school.
+- [x] Georgia current and archived pages return non-empty structured staff lists.
+- [x] Virginia Tech current and archived pages return non-empty structured staff lists.
+- [x] Wittenberg current and archived pages return non-empty structured staff lists.
+- [x] School-specific parsing runs before generic fallback.
+- [x] Generic fallback can recover staff-like records from common table/card/text layouts.
+- [x] Empty results still fail loudly instead of returning successful empty reports.
+- [x] API response shape remains unchanged from Phase 3.
+- [x] Frontend can show raw scraped counts for each school.
+
+Live extraction verified locally on 2026-05-02: Georgia current 410 / archive 358, Virginia Tech current 375 / archive 333, Wittenberg current 99 / archive 71.
 
 ---
 

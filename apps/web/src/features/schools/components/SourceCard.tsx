@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function SourceCard({
   label,
   title,
@@ -16,14 +18,14 @@ export function SourceCard({
       <p className="mt-4 break-all rounded-2xl border border-white/70 bg-white/55 p-3 font-mono text-xs leading-5 text-[#526d68]">
         {url}
       </p>
-      <a
+      <Link
         className="mt-4 inline-flex rounded-full border border-[#9bb8b2]/50 bg-white/50 px-4 py-2 text-sm font-bold text-[#14312f] hover:border-[#2f756c] hover:text-[#2f756c]"
-        href={url}
+        to={url}
         rel="noreferrer"
         target="_blank"
       >
         Open source
-      </a>
+      </Link>
     </article>
   );
 }

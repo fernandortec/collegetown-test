@@ -4,7 +4,7 @@ import { extractSidearmStaffRows, normalizeStaffRecords } from "./scraper-utils"
 
 export function getStaffVirginiaTechCurrent(html: string): StaffRecord[] {
   const $ = cheerio.load(html);
-  const records: any[] = [];
+  const records: StaffRecord[] = [];
 
   $("tr.staff-directory-table-member-position").each((_, row) => {
     const nameCell = $(row).find(".staff-directory-table-member-position__name");
