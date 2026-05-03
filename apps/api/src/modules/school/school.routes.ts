@@ -10,7 +10,7 @@ import type { SchoolResponse, SchoolsResponse } from "./school.types";
 
 export function registerSchoolRoutes(app: Hono): void {
   app.get("/api/schools", (c) =>
-    c.json<SchoolsResponse>({ schools: services.listSchools() }),
+    c.json<SchoolsResponse>({ schools: services.listPublicSchools() }),
   );
 
   app.get("/api/schools/:schoolId", (c) => {
@@ -25,7 +25,9 @@ export function registerSchoolRoutes(app: Hono): void {
       });
     }
 
-    return c.json<SchoolResponse>({ school });
+    return c.json<SchoolResponse>({
+      school: services.toPublicSchool(school),
+    });
   });
 
   app.get("/api/schools/:schoolId/diff", async (c) => {

@@ -369,13 +369,13 @@ describe("school scrapers", () => {
     expect(cleanText("Title IX Coordinator")).toBe("Title IX Coordinator");
   });
 
-  it("dedupes equivalent phone formats", () => {
+  it("normalizes records without owning deduplication", () => {
     expect(
       normalizeStaffRecords([
         {
           name: "Gary Bennett, Ph.D.",
           title: "Senior Associate Athletics Director, Clinical and Sport Psychologist",
-          email: "gabennet@vt.edu",
+          email: "GABENNET@VT.EDU",
           phone: "(540) 449-4597",
         },
         {
@@ -391,6 +391,12 @@ describe("school scrapers", () => {
         title: "Senior Associate Athletics Director, Clinical and Sport Psychologist",
         email: "gabennet@vt.edu",
         phone: "(540) 449-4597",
+      },
+      {
+        name: "Gary Bennett, Ph.D.",
+        title: "Senior Associate Athletics Director, Clinical and Sport Psychologist",
+        email: "gabennet@vt.edu",
+        phone: "540-449-4597",
       },
     ]);
   });

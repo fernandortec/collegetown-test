@@ -45,13 +45,15 @@ export type School = {
   };
 };
 
+export type PublicSchool = Omit<School, "scrapers">;
+
 export type DiffReportStats = {
   currentCount: number;
   archivedCount: number;
 };
 
 export type DiffReport = {
-  school: School;
+  school: PublicSchool;
   sources: {
     currentUrl: string;
     archivedUrl: string;
@@ -65,9 +67,9 @@ export type DiffReport = {
 };
 
 export type SchoolsResponse = {
-  schools: School[];
+  schools: PublicSchool[];
 };
 
 export type SchoolResponse = {
-  school: School;
+  school: PublicSchool;
 };

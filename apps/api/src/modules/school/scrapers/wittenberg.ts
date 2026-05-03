@@ -1,7 +1,11 @@
 import type { Page } from "playwright";
 
 import type { StaffRecord } from "../school.types";
-import { normalizeStaffRecords, RawStaffRecord } from "./scraper-utils";
+import {
+  dedupeStaffRecords,
+  normalizeStaffRecords,
+  RawStaffRecord,
+} from "./scraper-utils";
 
 export function getStaffWittenbergCurrent(page: Page): Promise<StaffRecord[]> {
   return getStaffFromDataTitleRows(page);
@@ -31,11 +35,17 @@ async function getStaffFromDataTitleRows(page: Page): Promise<StaffRecord[]> {
     }),
   );
 
+  const normalizedRows = normalizeStaffRecords(records);
+
   const flattenedRecords: RawStaffRecord[] = await page.$$eval(
     'a[href*="/information/directory/bios/"]',
     (links) =>
-      links.map((link) => {
+      links.flatMap((link) => {
         const row = link.closest("tr");
+        if (row?.querySelector('td[data-title="Name"], td[data-title="name"]')) {
+          return [];
+        }
+
         if (row) {
           const titleCell = row.querySelector('td[data-title="Title"], td[data-title="title"]');
           const phoneCell = row.querySelector('td[data-title="Phone"], td[data-title="phone"]');
@@ -89,5 +99,8 @@ async function getStaffFromDataTitleRows(page: Page): Promise<StaffRecord[]> {
       }),
   );
 
-  return normalizeStaffRecords([...records, ...flattenedRecords]);
+  return dedupeStaffRecords([
+    ...normalizedRows,
+    ...normalizeStaffRecords(flattenedRecords),
+  ]);
 }
