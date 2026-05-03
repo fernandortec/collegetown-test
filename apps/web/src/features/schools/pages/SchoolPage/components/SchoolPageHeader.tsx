@@ -14,7 +14,7 @@ export function SchoolPageHeader({ school }: SchoolPageHeaderProps) {
     <div className="relative isolate overflow-hidden p-8 md:p-12">
       <div
         aria-hidden="true"
-        className="absolute -right-8 top-4 -z-10 text-[8rem] font-semibold tracking-tighter opacity-10 md:text-[13rem]"
+        className="absolute -right-8 top-4 -z-10 text-[8rem] font-semibold tracking-tight opacity-10 md:text-[13rem]"
         style={{ color: school.colors.primary }}
       >
         {school.monogram}
