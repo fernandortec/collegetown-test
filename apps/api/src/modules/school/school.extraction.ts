@@ -1,7 +1,15 @@
-import { chromium, errors as playwrightErrors, type Browser, type Page } from "playwright";
+import {
+  chromium,
+  errors as playwrightErrors,
+  type Browser,
+  type Page,
+} from "playwright";
 import { z } from "zod";
 
-import { extractGenericStaffRecords } from "./scrapers/scraper-utils";
+import {
+  dedupeStaffRecords,
+  extractGenericStaffRecords,
+} from "./scrapers/scraper-utils";
 import type { School, SchoolId, StaffRecord } from "./school.types";
 
 export type ExtractionSource = "current" | "archive";
@@ -81,13 +89,30 @@ export async function extractStaffRecordsFromPage({
       .waitForLoadState("networkidle", { timeout: 5_000 })
       .catch(() => undefined);
 
-    await cleanupPageChrome(page);
-
-    await page
-      .waitForSelector(config.readySelector, {
+    try {
+      await page.waitForSelector(config.readySelector, {
         timeout: pageTimeoutMs,
-      })
-      .catch(() => undefined);
+      });
+    } catch (error) {
+      if (error instanceof playwrightErrors.TimeoutError) {
+        throw new StaffExtractionError(
+          "READY_SELECTOR_TIMEOUT",
+          `Content selector '${config.readySelector}' did not appear for the ${source} source after ${pageTimeoutMs}ms.`,
+          504,
+          {
+            schoolId: school.id,
+            source,
+            url,
+            readySelector: config.readySelector,
+            timeoutMs: pageTimeoutMs,
+          },
+        );
+      }
+
+      throw error;
+    }
+
+    await cleanupPageChrome(page);
 
     const schoolSpecificRecords = await config.scrape(page);
     const scrapedRecords =
@@ -140,9 +165,6 @@ async function cleanupPageChrome(page: Page): Promise<void> {
   await page.evaluate(() => {
     const selectors = [
       "script",
-      "style",
-      "link[rel='stylesheet']",
-      "link[as='style']",
       "meta",
       "noscript",
       "template",
@@ -191,7 +213,9 @@ function sanitizeStaffRecords(
   const sanitized = records.map((record) => ({
     name: record.name.trim(),
     title: record.title.trim(),
-    ...(record.email?.trim() ? { email: record.email.trim().toLowerCase() } : {}),
+    ...(record.email?.trim()
+      ? { email: record.email.trim().toLowerCase() }
+      : {}),
     ...(record.phone?.trim() ? { phone: record.phone.trim() } : {}),
   }));
 
@@ -206,20 +230,5 @@ function sanitizeStaffRecords(
     );
   }
 
-  const seen = new Set<string>();
-
-  return parsedRecords.data.filter((record) => {
-    const key = [
-      record.name,
-      record.title,
-      record.email ?? "",
-      record.phone ?? "",
-    ]
-      .join("|")
-      .toLowerCase();
-
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return dedupeStaffRecords(parsedRecords.data);
 }

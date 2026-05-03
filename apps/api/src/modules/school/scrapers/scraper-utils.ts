@@ -12,39 +12,40 @@ export type RawStaffRecord = {
 export function normalizeStaffRecords(
   records: RawStaffRecord[],
 ): StaffRecord[] {
-  const seen = new Set<string>();
-  const normalized: StaffRecord[] = [];
-
-  for (const record of records) {
+  return records.flatMap((record) => {
     const name = cleanText(record.name);
     const title = cleanTitle(record.title);
-    if (!name || !title) continue;
+    if (!name || !title) return [];
 
     const email = firstEmail(record.email);
     const phone = firstPhone(record.phone);
 
-    const normalizedRecord: StaffRecord = {
+    return {
       name,
       title,
       ...(email ? { email } : {}),
       ...(phone ? { phone } : {}),
     };
+  });
+}
 
+export function dedupeStaffRecords(records: StaffRecord[]): StaffRecord[] {
+  const seen = new Set<string>();
+
+  return records.filter((record) => {
     const key = [
-      normalizedRecord.name,
-      normalizedRecord.title,
-      normalizedRecord.email ?? "",
-      phoneDedupKey(normalizedRecord.phone) ?? "",
+      record.name,
+      record.title,
+      record.email ?? "",
+      phoneDedupKey(record.phone) ?? "",
     ]
       .join("|")
       .toLowerCase();
 
-    if (seen.has(key)) continue;
+    if (seen.has(key)) return false;
     seen.add(key);
-    normalized.push(normalizedRecord);
-  }
-
-  return normalized;
+    return true;
+  });
 }
 
 export function cleanText(value?: string | null): string {
@@ -87,121 +88,131 @@ export function firstPhone(value?: string | null): string | undefined {
 export async function extractGenericStaffRecords(
   page: Page,
 ): Promise<StaffRecord[]> {
-  const records: RawStaffRecord[] = [];
+  const records = [
+    ...(await extractFromTableRows(page)),
+    ...(await extractFromCards(page)),
+    ...(await extractFromText(page)),
+  ];
 
+  return preferRicherRecordsByNameAndTitle(normalizeStaffRecords(records));
+}
+
+async function extractFromTableRows(page: Page): Promise<RawStaffRecord[]> {
+  const records: RawStaffRecord[] = [];
   const rows = page.locator("tr");
   for (let rowIndex = 0; rowIndex < (await rows.count()); rowIndex += 1) {
-    const row = rows.nth(rowIndex);
-    const cells = row.locator("th, td");
-    const cellCount = await cells.count();
-    if (cellCount < 2) continue;
-
-    const mapped: RawStaffRecord = {};
-    const looseText: string[] = [];
-
-    for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
-      const cell = cells.nth(cellIndex);
-      const label = (
-        (await cell.getAttribute("data-title")) ??
-        (await cell.getAttribute("headers")) ??
-        (await cell.getAttribute("aria-label")) ??
-        (await cell.getAttribute("class")) ??
-        ""
-      )
-        .replace(/[_-]+/g, " ")
-        .toLowerCase();
-      const value = await cell.textContent();
-      const emailAnchor = cell.locator('a[href*="mailto:"]').first();
-      const phoneAnchor = cell.locator('a[href*="tel:"]').first();
-      const emailLink = await optionalAttribute(emailAnchor, "href");
-      const phoneLink =
-        (await optionalText(phoneAnchor)) ||
-        (await optionalAttribute(phoneAnchor, "href"));
-
-      if (isNameLabel(label)) mapped.name ??= value;
-      else if (isTitleLabel(label)) mapped.title ??= value;
-      else if (isEmailLabel(label)) mapped.email ??= emailLink ?? value;
-      else if (isPhoneLabel(label)) mapped.phone ??= phoneLink ?? value;
-      else looseText.push(value ?? "");
-
-      mapped.email ??= emailLink;
-      mapped.phone ??= phoneLink;
-    }
-
-    if (normalizeStaffRecords([mapped]).length > 0) {
-      records.push(mapped);
-      continue;
-    }
-
-    const values = looseText.map(cleanText).filter(Boolean);
-    if (values.length >= 2) {
-      records.push({
-        name: values[0],
-        title: values[1],
-        email: values.find((value) => firstEmail(value)),
-        phone: values.find((value) => firstPhone(value)),
-      });
-    }
+    const record = await extractFromTableRow(rows.nth(rowIndex));
+    if (record) records.push(record);
   }
 
-  const selector = [
-    '[class*="staff"]',
-    '[class*="person"]',
-    '[class*="profile"]',
-    '[class*="directory"]',
-    '[class*="coach"]',
-    '[class*="card"]',
-    '[itemtype*="Person"]',
-  ].join(",");
+  return records;
+}
 
+async function extractFromTableRow(row: Locator): Promise<RawStaffRecord | null> {
+  const cells = row.locator("th, td");
+  const cellCount = await cells.count();
+  if (cellCount < 2) return null;
+
+  const mapped: RawStaffRecord = {};
+  const looseText: string[] = [];
+
+  for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
+    const cell = cells.nth(cellIndex);
+    const label = (
+      (await cell.getAttribute("data-title")) ??
+      (await cell.getAttribute("headers")) ??
+      (await cell.getAttribute("aria-label")) ??
+      (await cell.getAttribute("class")) ??
+      ""
+    )
+      .replace(/[_-]+/g, " ")
+      .toLowerCase();
+    const value = await cell.textContent();
+    const emailAnchor = cell.locator('a[href*="mailto:"]').first();
+    const phoneAnchor = cell.locator('a[href*="tel:"]').first();
+    const emailLink = await optionalAttribute(emailAnchor, "href");
+    const phoneLink =
+      (await optionalText(phoneAnchor)) ||
+      (await optionalAttribute(phoneAnchor, "href"));
+
+    if (isNameLabel(label)) mapped.name ??= value;
+    else if (isTitleLabel(label)) mapped.title ??= value;
+    else if (isEmailLabel(label)) mapped.email ??= emailLink ?? value;
+    else if (isPhoneLabel(label)) mapped.phone ??= phoneLink ?? value;
+    else looseText.push(value ?? "");
+
+    mapped.email ??= emailLink;
+    mapped.phone ??= phoneLink;
+  }
+
+  if (normalizeStaffRecords([mapped]).length > 0) return mapped;
+
+  const values = looseText.map(cleanText).filter(Boolean);
+  if (values.length < 2) return null;
+
+  return {
+    name: values[0],
+    title: values[1],
+    email: values.find((value) => firstEmail(value)),
+    phone: values.find((value) => firstPhone(value)),
+  };
+}
+
+async function extractFromCards(page: Page): Promise<RawStaffRecord[]> {
+  const records: RawStaffRecord[] = [];
+  const selector = staffCardSelector();
   const cards = page.locator(selector);
   for (let cardIndex = 0; cardIndex < (await cards.count()); cardIndex += 1) {
-    const card = cards.nth(cardIndex);
-    if ((await card.locator(selector).count()) > 0) continue;
-
-    const emailLink = card.locator('a[href*="mailto:"]').first();
-    const phoneLink = card.locator('a[href*="tel:"]').first();
-    const text = await card.textContent();
-    const emailValue = await linkValue(emailLink, text);
-    const phoneValue = await linkValue(phoneLink, text, { preferText: true });
-
-    if (!firstEmail(emailValue) && !firstPhone(phoneValue)) {
-      continue;
-    }
-
-    const name = await firstNonEmptyText(card, [
-      '[class*="name"]',
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "strong",
-      "b",
-      'a:not([href*="mailto:"]):not([href*="tel:"])',
-    ]);
-    const title = await firstNonEmptyText(
-      card,
-      [
-        '[class*="title"]',
-        '[class*="position"]',
-        '[class*="role"]',
-        '[class*="job"]',
-        "p",
-        "div",
-      ],
-      name,
-    );
-
-    records.push({
-      name,
-      title,
-      email: emailValue,
-      phone: phoneValue,
-    });
+    const record = await extractFromCard(cards.nth(cardIndex), selector);
+    if (record) records.push(record);
   }
 
+  return records;
+}
+
+async function extractFromCard(
+  card: Locator,
+  cardSelector: string,
+): Promise<RawStaffRecord | null> {
+  if ((await card.locator(cardSelector).count()) > 0) return null;
+
+  const emailLink = card.locator('a[href*="mailto:"]').first();
+  const phoneLink = card.locator('a[href*="tel:"]').first();
+  const text = await card.textContent();
+  const emailValue = await linkValue(emailLink, text);
+  const phoneValue = await linkValue(phoneLink, text, { preferText: true });
+
+  if (!firstEmail(emailValue) && !firstPhone(phoneValue)) return null;
+
+  const name = await firstNonEmptyText(card, [
+    '[class*="name"]',
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "strong",
+    "b",
+    'a:not([href*="mailto:"]):not([href*="tel:"])',
+  ]);
+  const title = await firstNonEmptyText(
+    card,
+    [
+      '[class*="title"]',
+      '[class*="position"]',
+      '[class*="role"]',
+      '[class*="job"]',
+      "p",
+      "div",
+    ],
+    name,
+  );
+
+  return { name, title, email: emailValue, phone: phoneValue };
+}
+
+async function extractFromText(page: Page): Promise<RawStaffRecord[]> {
   const bodyText =
     (await page.locator("body").textContent()) ||
     (await page.locator("html").textContent()) ||
@@ -216,6 +227,8 @@ export async function extractGenericStaffRecords(
           line,
         ),
     );
+
+  const records: RawStaffRecord[] = [];
 
   for (let index = 0; index < lines.length; index += 1) {
     const window = lines.slice(index, index + 6);
@@ -242,7 +255,19 @@ export async function extractGenericStaffRecords(
     index += nameIndex + 1;
   }
 
-  return preferRicherRecordsByNameAndTitle(normalizeStaffRecords(records));
+  return records;
+}
+
+function staffCardSelector(): string {
+  return [
+    '[class*="staff"]',
+    '[class*="person"]',
+    '[class*="profile"]',
+    '[class*="directory"]',
+    '[class*="coach"]',
+    '[class*="card"]',
+    '[itemtype*="Person"]',
+  ].join(",");
 }
 
 async function optionalText(locator: Locator): Promise<string | null> {

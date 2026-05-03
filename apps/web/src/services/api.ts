@@ -33,7 +33,20 @@ const apiBaseUrl = env.VITE_API_BASE_URL.replace(/\/+$/, "");
 
 export async function getJson(path: string): Promise<unknown> {
   const response = await fetch(`${apiBaseUrl}${path}`);
-  const jsonData: unknown = await response.json().catch(() => null);
+  let jsonData: unknown;
+
+  try {
+    jsonData = await response.json();
+  } catch (error) {
+    throw new ApiError(
+      response.ok
+        ? "Response body was not valid JSON."
+        : `API request failed with status ${response.status}; response body was not valid JSON.`,
+      response.status,
+      "INVALID_JSON_RESPONSE",
+      error instanceof Error ? { cause: error.message } : undefined,
+    );
+  }
 
   if (!response.ok) {
     const parsedError = errorResponseSchema.safeParse(jsonData);

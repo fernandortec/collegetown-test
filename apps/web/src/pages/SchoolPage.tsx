@@ -17,11 +17,8 @@ interface SchoolPageProps {
 export function SchoolPage({ schoolId }: SchoolPageProps) {
   const schoolsQuery = useSchoolsQuery();
   const school = schoolsQuery.data?.find((item) => item.id === schoolId);
-
-  const diffQuery = useSchoolDiffQuery(
-    schoolId,
-    schoolsQuery.isSuccess && Boolean(school),
-  );
+  const canLoadDiff = schoolsQuery.isSuccess && Boolean(school);
+  const diffQuery = useSchoolDiffQuery(schoolId, canLoadDiff);
 
   if (schoolsQuery.isPending) return <CatalogLoadingPage />;
   if (schoolsQuery.isError) {
