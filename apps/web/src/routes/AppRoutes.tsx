@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { HomePage } from "../pages/HomePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
-import { SchoolRoute } from "../pages/SchoolPage";
+import { SchoolRoute } from "../features/schools/pages/SchoolPage";
 
 export function AppRoutes() {
   return (
