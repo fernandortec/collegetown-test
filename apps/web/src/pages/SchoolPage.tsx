@@ -4,7 +4,11 @@ import {
   useSchoolDiffQuery,
   useSchoolsQuery,
 } from "../features/schools/queries";
-import type { Change, DiffReport, StaffRecord } from "../features/schools/schemas";
+import type {
+  Change,
+  DiffReport,
+  StaffRecord,
+} from "../features/schools/schemas";
 import { getDefaultSnapshot, withAlpha } from "../features/schools/utils";
 import { CatalogErrorPage } from "../shared/components/CatalogErrorPage";
 import { CatalogLoadingPage } from "../shared/components/CatalogLoadingPage";
@@ -108,7 +112,7 @@ function ComparisonReport({
 }) {
   if (query.isPending) {
     return (
-      <div className="rounded-3xl border border-white/70 bg-white/55 p-6 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
+      <div className="rounded-3xl border border-white/70 bg-white/55 p-6  backdrop-blur">
         <p className="text-sm font-bold uppercase text-[#2f756c]">
           Extracting staff
         </p>
@@ -116,8 +120,8 @@ function ComparisonReport({
           Live extraction running.
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526d68]">
-          Backend renders both sources with Playwright, cleans …cleans page
-          text, and detects differences..
+          Backend renders both sources with Playwright, cleans page text, and
+          detects differences
         </p>
         <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#c8e6e0]">
           <div className="h-full animate-load-progress rounded-full bg-[#2f756c]" />
@@ -145,12 +149,12 @@ function ComparisonReport({
 function ReportSuccess({ report }: { report: DiffReport }) {
   return (
     <div className="min-w-0">
-      <div className="flex min-w-0 flex-col gap-5 rounded-2xl border border-white/70 bg-white/45 p-5 shadow-sm backdrop-blur md:flex-row md:items-start md:justify-between">
+      <div className="flex min-w-0 flex-col gap-5 rounded-2xl p-5  md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 md:max-w-2xl">
           <p className="text-base font-bold uppercase text-[#2f756c]">
             Staff intelligence report
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em] md:text-5xl">
+          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em] ">
             Top staff changes ranked by role impact.
           </h2>
           <p className="mt-3 text-base text-[#526d68]">
@@ -164,20 +168,14 @@ function ReportSuccess({ report }: { report: DiffReport }) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-4">
-        <SmallMetric label="Added" value={report.stats.addedCount} />
-        <SmallMetric label="Removed" value={report.stats.removedCount} />
-        <SmallMetric label="Title" value={report.stats.titleChangedCount} />
-        <SmallMetric label="Contact" value={report.stats.contactChangedCount} />
-      </div>
+      <hr className="h-0.5 text-[#2f756c]/10" />
 
-      <section className="mt-6 min-w-0">
+      <section className="mt-12 min-w-0">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">Top changes</p>
-            <h3 className="text-lg font-semibold tracking-[-0.03em]">
-              Most meaningful moves first.
-            </h3>
+            <p className="text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">
+              Top changes
+            </p>
           </div>
           <p className="text-xs font-semibold text-[#526d68]">
             Showing {report.topChanges.length} of {report.changes.length}
@@ -196,48 +194,54 @@ function ReportSuccess({ report }: { report: DiffReport }) {
   );
 }
 
-function ChangeTable({ changes, dense = false }: { changes: Change[]; dense?: boolean }) {
+function ChangeTable({
+  changes,
+  dense = false,
+}: {
+  changes: Change[];
+  dense?: boolean;
+}) {
   return (
-    <div className="mt-3 space-y-2">
+    <div className="mt-4 space-y-5">
       {changes.map((change) => (
         <article
           key={`${change.type}-${change.staffIdentity}`}
-          className="overflow-hidden rounded-xl border border-[#d8e8e4] bg-white/70 shadow-sm shadow-[#9bb8b2]/20"
+          className="overflow-hidden rounded-[1.75rem]  bg-white/75 shadow-lg shadow-[#9bb8b2]/20 backdrop-blur"
         >
-          <div className="flex flex-col gap-1.5 border-b border-[#e3eeeb] bg-[#f1f8f6] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[#2f756c]/15 bg-[#dff4ef] px-2 py-0.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#2f756c]">
-                  {formatChangeType(change.type)}
-                </span>
-                <span className="font-mono text-[0.68rem] font-semibold text-[#526d68]">
-                  score {change.importanceScore}
-                </span>
-              </div>
-              <h4 className="mt-1 truncate text-sm font-semibold text-[#14312f]">
+          <div className="border-b border-[#d8e8e4] bg-white/60 px-5 py-5">
+            <div className="flex min-w-0 items-center justify-between gap-4">
+              <h4 className="min-w-0 truncate text-xl font-semibold tracking-[-0.03em] text-[#14312f]">
                 {change.staffIdentity}
               </h4>
+              <span
+                className={`shrink-0 rounded-full border px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.14em] ${getChangeBadgeClasses(change.type)}`}
+              >
+                {formatChangeType(change.type)}
+              </span>
             </div>
             {!dense ? (
-              <p className="max-w-xl text-[0.68rem] leading-4 text-[#526d68]">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#526d68]">
                 {change.explanation}
               </p>
             ) : null}
           </div>
 
-          <div className="grid min-w-0 gap-px bg-[#d8e8e4]">
+          <div className="grid items-stretch gap-4 bg-white/45 p-4 lg:grid-cols-[1fr_auto_1fr]">
             <DiffRecord
-              label="Before"
-              marker="-"
+              label="Prior state"
               record={change.before}
-              emptyText="Not listed before"
+              emptyText="Not listed in archived snapshot"
               tone="removed"
             />
+            <div className="hidden items-center lg:flex">
+              <span className="grid size-10 place-items-center rounded-full  text-lg font-bold text-[#526d68] ">
+                →
+              </span>
+            </div>
             <DiffRecord
-              label="After"
-              marker="+"
+              label="Current state"
               record={change.after}
-              emptyText="Not listed after"
+              emptyText="Not listed in current directory"
               tone="added"
             />
           </div>
@@ -249,36 +253,68 @@ function ChangeTable({ changes, dense = false }: { changes: Change[]; dense?: bo
 
 function DiffRecord({
   label,
-  marker,
   record,
   emptyText,
   tone,
 }: {
   label: string;
-  marker: "+" | "-";
   record?: StaffRecord;
   emptyText: string;
   tone: "added" | "removed";
 }) {
-  const color = tone === "added" ? "text-[#2f756c]" : "text-[#8a3b2f]";
-  const bg = tone === "added" ? "bg-[#e8f6f2]" : "bg-[#fff4f1]";
-  const lines = record
-    ? [record.name, record.title, [record.email, record.phone].filter(Boolean).join(" · ")].filter(Boolean)
-    : [emptyText];
-
+  const panelClasses =
+    tone === "added"
+      ? "border-[#9bb8b2]/50 bg-[#e8f6f2]/85"
+      : "border-[#d8e8e4] bg-white/85";
+  const labelClasses = tone === "added" ? "text-[#2f756c]" : "text-[#526d68]";
   return (
-    <div className={`${bg} min-w-0 p-2.5 font-mono text-[0.68rem] leading-4`}>
-      <p className="mb-1 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[#526d68]">
+    <div className={`min-w-0 rounded-2xl border ${panelClasses} p-5`}>
+      <p className={`text-sm font-semibold uppercase  ${labelClasses}`}>
         {label}
       </p>
-      {lines.map((line) => (
-        <p key={line} className={`${color} flex min-w-0 gap-2 whitespace-pre-wrap break-words`}>
-          <span className="select-none text-[#8aa09c]">{marker}</span>
-          <span>{line}</span>
-        </p>
-      ))}
+      {record ? (
+        <div className="mt-4 space-y-3">
+          {getRecordFields(record).map((field) => (
+            <div
+              key={field.label}
+              className="grid gap-2 rounded-xl border border-white/80 bg-white/70 p-3 text-sm sm:grid-cols-[8rem_1fr]"
+            >
+              <p className="font-bold text-[#526d68]">{field.label}</p>
+              <p className="min-w-0 break-words font-semibold text-[#14312f]">
+                {field.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 flex min-h-40 items-center justify-center rounded-xl border border-dashed border-[#9bb8b2]/60 bg-white/45 px-6 py-8 text-center">
+          <p className="max-w-xs text-sm font-semibold leading-6 text-[#526d68]">
+            {emptyText}
+          </p>
+        </div>
+      )}
     </div>
   );
+}
+
+function getRecordFields(record: StaffRecord) {
+  return [
+    { label: "Designation", value: record.title || "Unknown title" },
+    {
+      label: "Direct contact",
+      value:
+        [record.email, record.phone].filter(Boolean).join(" · ") ||
+        "No direct contact listed",
+    },
+    { label: "Directory name", value: record.name },
+  ];
+}
+
+function getChangeBadgeClasses(type: Change["type"]) {
+  if (type === "added") return "border-[#2f756c]/15 bg-[#dff4ef] text-[#2f756c]";
+  if (type === "removed") return "border-[#e8b4a8] bg-[#fff4f1] text-[#8a3b2f]";
+  if (type === "title_changed") return "border-[#9bb8b2]/50 bg-white/70 text-[#2f756c]";
+  return "border-[#c8e6e0] bg-[#f1f8f6] text-[#526d68]";
 }
 
 function formatChangeType(type: Change["type"]): string {
@@ -294,17 +330,6 @@ function MetricCard({ label, value }: { label: string; value: number }) {
       <p className="mt-0.5 truncate text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">
         {label}
       </p>
-    </div>
-  );
-}
-
-function SmallMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex min-w-0 items-center justify-between rounded-xl border border-white/70 bg-white/45 px-3 py-2 shadow-sm backdrop-blur">
-      <p className="truncate text-[0.68rem] font-black uppercase tracking-widest text-[#2f756c]">
-        {label}
-      </p>
-      <p className="text-lg font-semibold text-[#14312f]">{value}</p>
     </div>
   );
 }
