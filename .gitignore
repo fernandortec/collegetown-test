@@ -16,3 +16,4 @@ dist-ssr
 !.vscode/extensions.json
 .DS_Store
 .env
+worktrees
