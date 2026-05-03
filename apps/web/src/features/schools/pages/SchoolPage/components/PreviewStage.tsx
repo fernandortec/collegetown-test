@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const PREVIEW_TRANSITION_MS = 500;
+type PreviewKind = "current" | "archived";
 
 export function PreviewStage({
   currentUrl,
@@ -7,19 +10,44 @@ export function PreviewStage({
   currentUrl: string;
   archivedUrl: string;
 }) {
-  const [activePreview, setActivePreview] = useState<"current" | "archived">(
-    "current",
-  );
+  const [activePreview, setActivePreview] = useState<PreviewKind>("current");
+  const [exitingPreview, setExitingPreview] = useState<PreviewKind | null>(null);
+  const transitionTimeoutRef = useRef<number | null>(null);
   const activeIndex = activePreview === "current" ? 0 : 1;
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current !== null) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function selectPreview(nextPreview: PreviewKind) {
+    if (nextPreview === activePreview) {
+      return;
+    }
+
+    if (transitionTimeoutRef.current !== null) {
+      window.clearTimeout(transitionTimeoutRef.current);
+    }
+
+    setExitingPreview(activePreview);
+    setActivePreview(nextPreview);
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      setExitingPreview(null);
+      transitionTimeoutRef.current = null;
+    }, PREVIEW_TRANSITION_MS);
+  }
 
   return (
     <section className="border-t border-white/70 bg-[#14312f]/3 p-4 md:p-6">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2f756c]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#2f756c]">
             Source
           </p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#14312f] md:text-3xl">
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-[#14312f] md:text-3xl">
             Before and after preview
           </h2>
         </div>
@@ -27,12 +55,12 @@ export function PreviewStage({
           <PreviewTab
             active={activePreview === "current"}
             label="Current"
-            onClick={() => setActivePreview("current")}
+            onClick={() => selectPreview("current")}
           />
           <PreviewTab
             active={activePreview === "archived"}
             label="Archived"
-            onClick={() => setActivePreview("archived")}
+            onClick={() => selectPreview("archived")}
           />
         </div>
       </div>
@@ -43,10 +71,26 @@ export function PreviewStage({
           style={{ transform: `translateX(-${activeIndex * 100}%)` }}
         >
           <div className="w-full shrink-0">
-            <PagePreview key={currentUrl} label="Current" url={currentUrl} />
+            <PagePreview
+              active={activePreview === "current"}
+              key={currentUrl}
+              label="Current"
+              previewModeVisible={
+                activePreview === "current" || exitingPreview === "current"
+              }
+              url={currentUrl}
+            />
           </div>
           <div className="w-full shrink-0">
-            <PagePreview key={archivedUrl} label="Archived" url={archivedUrl} />
+            <PagePreview
+              active={activePreview === "archived"}
+              key={archivedUrl}
+              label="Archived"
+              previewModeVisible={
+                activePreview === "archived" || exitingPreview === "archived"
+              }
+              url={archivedUrl}
+            />
           </div>
         </div>
       </div>
@@ -65,7 +109,7 @@ function PreviewTab({
 }) {
   return (
     <button
-      className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${
+      className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-wide transition ${
         active
           ? "bg-[#14312f] text-white shadow-sm"
           : "text-[#526d68] hover:text-[#14312f]"
@@ -78,17 +122,47 @@ function PreviewTab({
   );
 }
 
-function PagePreview({ label, url }: { label: string; url: string }) {
+function PagePreview({
+  active,
+  label,
+  previewModeVisible,
+  url,
+}: {
+  active: boolean;
+  label: string;
+  previewModeVisible: boolean;
+  url: string;
+}) {
   const [loaded, setLoaded] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [dismissedFallback, setDismissedFallback] = useState(false);
+  const [navigationEnabled, setNavigationEnabled] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(active);
 
   useEffect(() => {
+    setLoaded(false);
+    setTimedOut(false);
+    setDismissedFallback(false);
+    setNavigationEnabled(false);
+    setShouldLoad(false);
+  }, [url]);
+
+  useEffect(() => {
+    if (active) {
+      setShouldLoad(true);
+    }
+  }, [active, url]);
+
+  useEffect(() => {
+    if (!active || !shouldLoad || loaded) {
+      return;
+    }
+
     const id = window.setTimeout(() => setTimedOut(true), 8000);
     return () => window.clearTimeout(id);
-  }, []);
+  }, [active, loaded, shouldLoad, url]);
 
-  const showFallback = timedOut && !loaded && !dismissedFallback;
+  const showFallback = active && timedOut && !loaded && !dismissedFallback;
 
   return (
     <article className="overflow-hidden rounded-[1.35rem]  border border-[#d8e8e4] bg-[#0f2422] shadow-xl shadow-[#9bb8b2]/90">
@@ -125,14 +199,35 @@ function PagePreview({ label, url }: { label: string; url: string }) {
             </div>
           </div>
         ) : null}
-        <iframe
-          className="h-full w-full bg-white"
-          onLoad={() => setLoaded(true)}
-          referrerPolicy="no-referrer"
-          sandbox="allow-same-origin allow-scripts"
-          src={url}
-          title={`${label} preview`}
-        />
+        {shouldLoad ? (
+          <iframe
+            className="h-full w-full bg-white"
+            onLoad={() => setLoaded(true)}
+            referrerPolicy="no-referrer"
+            sandbox="allow-same-origin allow-scripts"
+            src={url}
+            title={`${label} preview`}
+          />
+        ) : null}
+        {previewModeVisible && !navigationEnabled ? (
+          <div className="absolute inset-0 z-10 grid place-items-center bg-[#14312f]/25 p-6 text-center backdrop-blur-[1px]">
+            <div className="max-w-sm rounded-3xl border border-white/70 bg-white/95 p-5 shadow-2xl shadow-[#14312f]/20">
+              <p className="text-xs font-black uppercase tracking-wide text-[#2f756c]">
+                Preview mode
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#526d68]">
+                Click through when you want to explore source page directly.
+              </p>
+              <button
+                className="mt-4 rounded-full bg-[#14312f] px-5 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:bg-[#2f756c]"
+                onClick={() => setNavigationEnabled(true)}
+                type="button"
+              >
+                Explore page
+              </button>
+            </div>
+          </div>
+        ) : null}
         {showFallback ? (
           <div className="absolute bottom-4 right-4 z-10 max-w-sm rounded-2xl border border-[#d8e8e4] bg-white/95 p-4 text-left shadow-2xl shadow-[#14312f]/20 backdrop-blur">
             <div className="flex items-start gap-3">

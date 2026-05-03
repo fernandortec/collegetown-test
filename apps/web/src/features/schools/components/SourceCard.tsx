@@ -10,8 +10,8 @@ export function SourceCard({
   return (
     <article className="flex flex-col items-start justify-between rounded-[1.75rem] border border-white/70 bg-white/60 p-6 shadow-lg shadow-[#9bb8b2]/10 backdrop-blur">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#2f756c]">{label}</p>
-        <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-[#14312f]">
+        <p className="text-xs font-bold uppercase tracking-wide text-[#2f756c]">{label}</p>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#14312f]">
           {title}
         </h2>
         <p className="mt-4 break-all rounded-2xl border border-white/70 bg-white/55 px-4 py-3 font-mono text-xs leading-5 text-[#526d68]">

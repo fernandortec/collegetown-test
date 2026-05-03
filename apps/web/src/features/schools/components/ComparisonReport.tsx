@@ -5,20 +5,21 @@ import {
 import { useSchoolDiffQuery } from "../queries";
 import { DiffReport } from "../schemas";
 import { ChangeTable } from "./ChangeTable";
+import { RefreshButton } from "./RefreshButton";
 
 export function ComparisonReport({
   query,
+  onRefresh,
 }: {
   query: ReturnType<typeof useSchoolDiffQuery>;
+  onRefresh: () => Promise<void>;
 }) {
-  if (query.isPending) {
+  if (query.isPending || query.isFetching) {
     return (
       <div className="rounded-3xl border border-white/70 bg-white/55 p-6  backdrop-blur">
-        <p className="text-sm font-bold uppercase text-[#2f756c]">
-          Extracting staff
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
-          Live extraction running.
+        <p>Extracting page contents</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+          Fetching staff
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526d68]">
           Backend renders both sources with Playwright, cleans page text, and
@@ -33,29 +34,50 @@ export function ComparisonReport({
 
   if (query.isError) {
     return (
-      <div className="rounded-3xl border border-[#e8b4a8] bg-[#fff4f1]/80 p-6">
-        <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#8a3b2f]">
+      <div className="relative rounded-3xl border border-[#e8b4a8] bg-[#fff4f1]/80 p-6 pr-20">
+        <p className="text-sm font-bold uppercase tracking-wide text-[#8a3b2f]">
           Diff load failed
         </p>
         <p className="mt-4 font-mono text-sm text-[#8a3b2f]">
           {query.error.message}
         </p>
+        {!query.isFetching && (
+          <RefreshButton
+            className="absolute right-5 top-5 border-[#e8b4a8] bg-white/80 text-[#8a3b2f] hover:bg-white"
+            label="Retry scrape"
+            onRefresh={onRefresh}
+          />
+        )}
       </div>
     );
   }
 
-  return <ReportSuccess report={query.data} />;
+  return (
+    <ReportSuccess
+      report={query.data}
+      isRefreshing={query.isFetching}
+      onRefresh={onRefresh}
+    />
+  );
 }
 
-function ReportSuccess({ report }: { report: DiffReport }) {
+function ReportSuccess({
+  report,
+  isRefreshing,
+  onRefresh,
+}: {
+  report: DiffReport;
+  isRefreshing: boolean;
+  onRefresh: () => Promise<void>;
+}) {
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[17rem_1fr]">
+    <div className="relative grid min-w-0 gap-6 pr-16 lg:grid-cols-[17rem_1fr]">
       <aside className="hidden lg:block">
         <div className="sticky top-6 rounded-3xl border border-white/70 bg-white/70 p-5 shadow-lg shadow-[#9bb8b2]/20 backdrop-blur">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2f756c]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#2f756c]">
             Summary rail
           </p>
-          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#14312f]">
+          <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#14312f]">
             {report.school.shortName}
           </h3>
           <p className="mt-2 text-sm leading-6 text-[#526d68]">
@@ -86,12 +108,18 @@ function ReportSuccess({ report }: { report: DiffReport }) {
             <p className="text-base font-bold uppercase text-[#2f756c]">
               Staff intelligence report
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em] ">
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight ">
               Top staff changes ranked by role impact.
             </h2>
             <p className="mt-3 text-base text-[#526d68]">
               Generated at {new Date(report.generatedAt).toLocaleString()}.
             </p>
+            {!isRefreshing && (
+              <RefreshButton
+                className="absolute right-0 top-0"
+                onRefresh={onRefresh}
+              />
+            )}
           </div>
           <div className="grid grid-cols-3 gap-2 md:min-w-[24rem]">
             <MetricCard label="Current" value={report.stats.currentCount} />
@@ -105,7 +133,7 @@ function ReportSuccess({ report }: { report: DiffReport }) {
         <section className="mt-12 min-w-0">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">
+              <p className="text-[0.68rem] font-bold uppercase tracking-wide text-[#2f756c]">
                 Top changes
               </p>
             </div>

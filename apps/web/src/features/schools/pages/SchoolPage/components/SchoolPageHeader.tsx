@@ -14,7 +14,7 @@ export function SchoolPageHeader({ school }: SchoolPageHeaderProps) {
     <div className="relative isolate overflow-hidden p-8 md:p-12">
       <div
         aria-hidden="true"
-        className="absolute -right-8 top-4 -z-10 text-[8rem] font-semibold tracking-[-0.12em] opacity-10 md:text-[13rem]"
+        className="absolute -right-8 top-4 -z-10 text-[8rem] font-semibold tracking-tighter opacity-10 md:text-[13rem]"
         style={{ color: school.colors.primary }}
       >
         {school.monogram}
@@ -33,7 +33,7 @@ export function SchoolPageHeader({ school }: SchoolPageHeaderProps) {
         </span>
       </div>
 
-      <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.045em] md:text-7xl">
+      <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight md:text-7xl">
         {school.name}
       </h1>
       <p className="mt-5 max-w-2xl text-lg leading-8 text-[#526d68]">
