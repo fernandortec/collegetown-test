@@ -1,0 +1,128 @@
+import {
+  RailMetric,
+  MetricCard,
+} from "../pages/SchoolPage/components/SchoolPageUI";
+import { useSchoolDiffQuery } from "../queries";
+import { DiffReport } from "../schemas";
+import { ChangeTable } from "./ChangeTable";
+
+export function ComparisonReport({
+  query,
+}: {
+  query: ReturnType<typeof useSchoolDiffQuery>;
+}) {
+  if (query.isPending) {
+    return (
+      <div className="rounded-3xl border border-white/70 bg-white/55 p-6  backdrop-blur">
+        <p className="text-sm font-bold uppercase text-[#2f756c]">
+          Extracting staff
+        </p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">
+          Live extraction running.
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526d68]">
+          Backend renders both sources with Playwright, cleans page text, and
+          detects differences
+        </p>
+        <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#c8e6e0]">
+          <div className="h-full animate-load-progress rounded-full bg-[#2f756c]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (query.isError) {
+    return (
+      <div className="rounded-3xl border border-[#e8b4a8] bg-[#fff4f1]/80 p-6">
+        <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#8a3b2f]">
+          Diff load failed
+        </p>
+        <p className="mt-4 font-mono text-sm text-[#8a3b2f]">
+          {query.error.message}
+        </p>
+      </div>
+    );
+  }
+
+  return <ReportSuccess report={query.data} />;
+}
+
+function ReportSuccess({ report }: { report: DiffReport }) {
+  return (
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[17rem_1fr]">
+      <aside className="hidden lg:block">
+        <div className="sticky top-6 rounded-3xl border border-white/70 bg-white/70 p-5 shadow-lg shadow-[#9bb8b2]/20 backdrop-blur">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#2f756c]">
+            Summary rail
+          </p>
+          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#14312f]">
+            {report.school.shortName}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[#526d68]">
+            Snapshot: {report.sources.snapshotLabel}
+          </p>
+          <div className="mt-5 space-y-2">
+            <RailMetric
+              label="Current staff"
+              value={report.stats.currentCount}
+            />
+            <RailMetric
+              label="Archived staff"
+              value={report.stats.archivedCount}
+            />
+            <RailMetric
+              label="Total changes"
+              value={report.stats.totalChanges}
+            />
+            <RailMetric label="Added" value={report.stats.addedCount} />
+            <RailMetric label="Removed" value={report.stats.removedCount} />
+          </div>
+        </div>
+      </aside>
+
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-col gap-5 rounded-2xl p-5 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 md:max-w-2xl">
+            <p className="text-base font-bold uppercase text-[#2f756c]">
+              Staff intelligence report
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.035em] ">
+              Top staff changes ranked by role impact.
+            </h2>
+            <p className="mt-3 text-base text-[#526d68]">
+              Generated at {new Date(report.generatedAt).toLocaleString()}.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:min-w-[24rem]">
+            <MetricCard label="Current" value={report.stats.currentCount} />
+            <MetricCard label="Archived" value={report.stats.archivedCount} />
+            <MetricCard label="Changes" value={report.stats.totalChanges} />
+          </div>
+        </div>
+
+        <hr className="h-0.5 text-[#2f756c]/10" />
+
+        <section className="mt-12 min-w-0">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[0.68rem] font-bold uppercase tracking-widest text-[#2f756c]">
+                Top changes
+              </p>
+            </div>
+            <p className="text-xs font-semibold text-[#526d68]">
+              Showing {report.topChanges.length} of {report.changes.length}
+            </p>
+          </div>
+          <ChangeTable changes={report.topChanges} />
+        </section>
+
+        <details className="mt-4 rounded-xl border border-white/70 bg-white/55 p-3 shadow-sm backdrop-blur">
+          <summary className="cursor-pointer text-xs font-bold uppercase text-[#2f756c]">
+            All detected changes ({report.changes.length})
+          </summary>
+          <ChangeTable changes={report.changes} dense />
+        </details>
+      </div>
+    </div>
+  );
+}

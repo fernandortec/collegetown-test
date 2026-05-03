@@ -8,7 +8,7 @@ export function SchoolPanel({ school }: { school: School }) {
   const colors = school.colors;
 
   return (
-    <article className="group relative flex min-h-[24rem] flex-col justify-between overflow-hidden rounded-[2rem] border border-white/70 bg-white/60 p-6 shadow-lg shadow-[#9bb8b2]/15 backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/75 hover:shadow-xl hover:shadow-[#9bb8b2]/20">
+    <article className="group relative flex min-h-96 flex-col justify-between overflow-hidden rounded-4xl border border-white/70 bg-white/60 p-6 shadow-lg shadow-[#9bb8b2]/15 backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/75 hover:shadow-xl hover:shadow-[#9bb8b2]/20">
       <div
         className="absolute inset-x-0 top-0 h-1"
         style={{ background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})` }}
