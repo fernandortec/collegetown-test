@@ -1,5 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
-import { useSchoolDiffQuery, useSchoolsQuery } from "../../queries";
+import {
+  schoolQueryKeys,
+  useSchoolDiffQuery,
+  useSchoolsQuery,
+} from "../../queries";
 import { getDefaultSnapshot } from "../../utils";
 import { CatalogErrorPage } from "../../../../shared/components/CatalogErrorPage";
 import { CatalogLoadingPage } from "../../../../shared/components/CatalogLoadingPage";
@@ -16,7 +21,14 @@ export function SchoolPage({ schoolId }: SchoolPageProps) {
   const schoolsQuery = useSchoolsQuery();
   const school = schoolsQuery.data?.find((item) => item.id === schoolId);
   const canLoadDiff = schoolsQuery.isSuccess && Boolean(school);
+  const queryClient = useQueryClient();
   const diffQuery = useSchoolDiffQuery(schoolId, canLoadDiff);
+
+  const refreshDiff = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: schoolQueryKeys.diff(schoolId),
+    });
+  };
 
   if (schoolsQuery.isPending) return <CatalogLoadingPage />;
   if (schoolsQuery.isError) {
@@ -54,7 +66,7 @@ export function SchoolPage({ schoolId }: SchoolPageProps) {
           />
 
           <div className="border-t border-white/70 bg-white/45 p-5 md:p-8">
-            <ComparisonReport query={diffQuery} />
+            <ComparisonReport query={diffQuery} onRefresh={refreshDiff} />
           </div>
         </div>
       </section>

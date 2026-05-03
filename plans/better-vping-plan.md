@@ -208,13 +208,13 @@ Add client-side data behavior: one-hour React Query cache for diff results, no s
 
 ### Acceptance criteria
 
-- [ ] Diff query uses one-hour stale time.
-- [ ] Backend does not cache diff reports.
-- [ ] Returning to a school within one hour uses cached frontend data.
-- [ ] Manual refresh invalidates the school diff query.
-- [ ] Manual refresh triggers a fresh backend scrape.
-- [ ] Refresh button shows loading/disabled state while re-scraping.
-- [ ] Cached errors can be retried via refresh.
+- [x] Diff query uses one-hour stale time.
+- [x] Backend does not cache diff reports.
+- [x] Returning to a school within one hour uses cached frontend data.
+- [x] Manual refresh invalidates the school diff query.
+- [x] Manual refresh triggers a fresh backend scrape.
+- [x] Refresh button shows loading/disabled state while re-scraping.
+- [x] Cached errors can be retried via refresh.
 
 ---
 
