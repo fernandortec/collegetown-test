@@ -186,15 +186,15 @@ Build the polished comparison experience around the working report: current and 
 
 ### Acceptance criteria
 
-- [ ] School page initially shows current page preview and snapshot/control area.
-- [ ] After comparison loads, current and archived previews appear side by side on desktop.
-- [ ] Page previews use fixed height around 70vh.
-- [ ] If embedding fails or is blocked, UI shows a clear fallback state.
-- [ ] Current and archived sources have open-original links.
-- [ ] Diff report remains visible and usable regardless of iframe success.
-- [ ] Sticky left summary rail appears on desktop after diff loads.
-- [ ] Layout remains usable on mobile with stacked sections.
-- [ ] Visual treatment stays premium red/news-style with school accents.
+- [x] School page initially shows current page preview and snapshot/control area.
+- [x] After comparison loads, current and archived previews appear side by side on desktop.
+- [x] Page previews use fixed height around 70vh.
+- [x] If embedding fails or is blocked, UI shows a clear fallback state.
+- [x] Current and archived sources have open-original links.
+- [x] Diff report remains visible and usable regardless of iframe success.
+- [x] Sticky left summary rail appears on desktop after diff loads.
+- [x] Layout remains usable on mobile with stacked sections.
+- [x] Visual treatment stays premium red/news-style with school accents.
 
 ---
 
