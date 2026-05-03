@@ -32,7 +32,19 @@ export function formatApiError(error: unknown): string {
 const apiBaseUrl = env.VITE_API_BASE_URL.replace(/\/+$/, "");
 
 export async function getJson(path: string): Promise<unknown> {
-  const response = await fetch(`${apiBaseUrl}${path}`);
+  return requestJson(path);
+}
+
+export async function postJson(path: string, body: unknown): Promise<unknown> {
+  return requestJson(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl}${path}`, init);
   let jsonData: unknown;
 
   try {

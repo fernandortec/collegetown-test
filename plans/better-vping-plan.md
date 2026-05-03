@@ -228,17 +228,17 @@ Add the AI-generated deliverable. Once top changes load, the frontend automatica
 
 ### Acceptance criteria
 
-- [ ] Email draft request is enabled only after top changes are available.
-- [ ] Email draft query uses one-hour frontend cache.
-- [ ] `POST /api/schools/:schoolId/email-draft` accepts already-computed top changes and stats.
-- [ ] Backend does not re-scrape when generating draft.
-- [ ] AI prompt only uses scraped changes and school/snapshot context.
-- [ ] Draft does not invent reasons, outside news, or unverifiable context.
-- [ ] Draft returns subject, body, summary, and fallback flag.
-- [ ] Missing AI key returns deterministic fallback draft.
-- [ ] Draft body uses 2–5 concise `➤` bullets in Coaches Corner style.
-- [ ] Sticky summary rail shows draft loading, success, and fallback badge states.
-- [ ] Mailto CTA opens an encoded subject/body draft.
+- [x] Email draft request is enabled only after top changes are available.
+- [x] Email draft query uses one-hour frontend cache.
+- [x] `POST /api/schools/:schoolId/email-draft` accepts already-computed top changes and stats.
+- [x] Backend does not re-scrape when generating draft.
+- [x] AI prompt only uses scraped changes and school/snapshot context.
+- [x] Draft does not invent reasons, outside news, or unverifiable context.
+- [x] Draft returns subject, body, summary, and fallback flag.
+- [x] Missing AI key returns deterministic fallback draft.
+- [x] Draft body uses 2–5 concise `➤` bullets in Coaches Corner style.
+- [x] Sticky summary rail shows draft loading, success, and fallback badge states.
+- [x] Mailto CTA opens an encoded subject/body draft.
 
 ---
 

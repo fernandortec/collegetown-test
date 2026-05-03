@@ -1,10 +1,10 @@
 export function RailMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-white/70 bg-white/60 px-3 py-2">
-      <span className="text-xs font-bold uppercase tracking-wide text-[#526d68]">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/70 bg-white/65 px-4 py-3">
+      <span className="text-sm font-bold uppercase tracking-wide text-[#526d68]">
         {label}
       </span>
-      <span className="text-lg font-semibold text-[#14312f]">{value}</span>
+      <span className="text-2xl font-semibold text-[#14312f]">{value}</span>
     </div>
   );
 }

@@ -5,8 +5,9 @@ import {
   extractStaffRecordsFromPage,
   withStaffExtractionBrowser,
 } from "./school.extraction";
+import { buildEmailDraft, emailDraftRequestSchema } from "./school.email";
 import * as services from "./school.service";
-import type { SchoolResponse, SchoolsResponse } from "./school.types";
+import type { EmailDraft, SchoolResponse, SchoolsResponse } from "./school.types";
 
 export function registerSchoolRoutes(app: Hono): void {
   app.get("/api/schools", (c) =>
@@ -28,6 +29,43 @@ export function registerSchoolRoutes(app: Hono): void {
     return c.json<SchoolResponse>({
       school: services.toPublicSchool(school),
     });
+  });
+
+  app.post("/api/schools/:schoolId/email-draft", async (c) => {
+    c.header("Cache-Control", "no-store, max-age=0");
+
+    const schoolId = c.req.param("schoolId");
+    const school = services.getSchoolById(schoolId);
+
+    if (!school) {
+      return jsonError(c, 404, {
+        code: "SCHOOL_NOT_FOUND",
+        message: `School '${schoolId}' is not in the Better VPing catalog.`,
+        details: { schoolId },
+      });
+    }
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return jsonError(c, 400, {
+        code: "INVALID_EMAIL_DRAFT_REQUEST",
+        message: "Email draft request body must be valid JSON.",
+      });
+    }
+
+    const parsedBody = emailDraftRequestSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return jsonError(c, 400, {
+        code: "INVALID_EMAIL_DRAFT_REQUEST",
+        message: "Email draft request must include topChanges and stats from an existing diff report.",
+        details: { issues: parsedBody.error.issues },
+      });
+    }
+
+    const draft = await buildEmailDraft(school, parsedBody.data);
+    return c.json<EmailDraft>(draft);
   });
 
   app.get("/api/schools/:schoolId/diff", async (c) => {

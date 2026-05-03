@@ -84,6 +84,13 @@ export type DiffReport = {
   stats: DiffReportStats;
 };
 
+export type EmailDraft = {
+  subject: string;
+  body: string;
+  summary: string;
+  fallback: boolean;
+};
+
 export type SchoolsResponse = {
   schools: PublicSchool[];
 };

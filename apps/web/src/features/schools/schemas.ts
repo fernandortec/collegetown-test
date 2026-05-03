@@ -65,6 +65,13 @@ export const diffReportSchema = z.object({
   }),
 });
 
+export const emailDraftSchema = z.object({
+  subject: z.string(),
+  body: z.string(),
+  summary: z.string(),
+  fallback: z.boolean(),
+});
+
 export const schoolsResponseSchema = z.object({
   schools: z.array(schoolSchema),
 });
@@ -74,3 +81,4 @@ export type SchoolSnapshot = z.infer<typeof schoolSnapshotSchema>;
 export type StaffRecord = z.infer<typeof staffRecordSchema>;
 export type Change = z.infer<typeof changeSchema>;
 export type DiffReport = z.infer<typeof diffReportSchema>;
+export type EmailDraft = z.infer<typeof emailDraftSchema>;
